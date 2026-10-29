@@ -94,15 +94,19 @@ export interface ScanConfig {
 }
 
 export interface ScanProgress {
-  files_scanned: number;
-  files_total: number;
+  scanned_files: number;
+  total_files: number;
   current_file: string;
+  percentage: number;
+  status: string;
   errors: number;
   elapsed_ms: number;
+  files_scanned?: number;
+  files_total?: number;
 }
 
 export interface FieldDefinition {
-  key: keyof FileMetadata;
+  key: string;
   label: string;
   category: string;
   description: string;

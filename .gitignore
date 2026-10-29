@@ -25,6 +25,10 @@ Thumbs.db
 # ExifTool binaries (large binary)
 exiftool.exe
 exiftool
+exiftool.zip
+exiftool_extracted/
+src-tauri/exiftool_files/
+src-tauri/gen/
 
 # Secrets / Private Keys (Never commit these!)
 nexgen_private.key

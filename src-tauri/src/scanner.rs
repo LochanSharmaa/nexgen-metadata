@@ -6,6 +6,7 @@
 use crate::database::DatabaseWriter;
 use crate::errors::NexGenError;
 use crate::exiftool_pool::ExiftoolPool;
+use crate::field_mapper::{FieldMapper, GoldenMatrix, RawCache};
 use crate::forensics::{get_ads_info, get_ntfs_metadata};
 use crate::models::{human_size, FileMetadata};
 use crate::parsers::{pdf, pe};
@@ -13,13 +14,22 @@ use crate::reader::DynamicReader;
 use jwalk::WalkDir;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
+use std::collections::VecDeque;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::Instant;
-use tokio::sync::{broadcast, mpsc, Mutex};
+use tokio::sync::{broadcast, Mutex};
 use tokio_util::sync::CancellationToken;
-use tracing::{error, info, warn};
+use tracing::{info, warn};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ScanConfig {
+    pub root_path: PathBuf,
+    pub recursive: bool,
+    pub include_hidden: bool,
+    pub selected_fields: Vec<String>,
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScanProgress {
@@ -33,6 +43,7 @@ pub struct ScanProgress {
 }
 
 pub async fn start_scan(
+    scan_id: String,
     folder_path: String,
     recursive: bool,
     include_hidden: bool,
@@ -42,10 +53,14 @@ pub async fn start_scan(
     exiftool_pool: Arc<ExiftoolPool>,
     db_writer: DatabaseWriter,
     results_store: Arc<Mutex<Vec<FileMetadata>>>,
+    raw_cache: Arc<Mutex<VecDeque<RawCache>>>,
 ) -> Result<u64, NexGenError> {
     let root_path = PathBuf::from(&folder_path);
-    info!("Starting scan on target directory: {:?}", root_path);
+    info!("Starting scan {} on target directory: {:?}", scan_id, root_path);
     let start_time = Instant::now();
+
+    // Initialize the Tier 0 Self-Healing Field Mapper with the Golden Matrix
+    let field_mapper = Arc::new(FieldMapper::new(GoldenMatrix::load_embedded()));
 
     // 1. Walk directory tree using jwalk
     let mut walker = WalkDir::new(&root_path).follow_links(false);
@@ -131,16 +146,17 @@ pub async fn start_scan(
         let id_gen_ref = Arc::clone(&id_generator);
         let err_ref = Arc::clone(&error_counter);
         let cancel_ref = cancel_token.clone();
+        let mapper_ref = Arc::clone(&field_mapper);
 
         // Process batch in parallel using Rayon
-        let processed_records: Vec<FileMetadata> = chunk
+        let batch_results: Vec<(FileMetadata, serde_json::Value)> = chunk
             .into_par_iter()
             .filter_map(|path| {
                 if cancel_ref.is_cancelled() {
                     return None;
                 }
-                match process_single_file(&path, &exiftool_ref, &id_gen_ref) {
-                    Ok(meta) => Some(meta),
+                match process_single_file(&path, &exiftool_ref, &id_gen_ref, &mapper_ref) {
+                    Ok(res) => Some(res),
                     Err(e) => {
                         err_ref.fetch_add(1, Ordering::Relaxed);
                         warn!("Error parsing {:?}: {}", path, e);
@@ -150,8 +166,11 @@ pub async fn start_scan(
             })
             .collect();
 
-        let count = processed_records.len() as u64;
-        let current_count = scanned_counter.fetch_add(count, Ordering::Relaxed) + count;
+        let count = batch_results.len() as u64;
+        let prev_count = scanned_counter.fetch_add(count, Ordering::Relaxed);
+        let current_count = prev_count + count;
+
+        let processed_records: Vec<FileMetadata> = batch_results.iter().map(|(m, _)| m.clone()).collect();
         let last_file_name = processed_records
             .last()
             .and_then(|r| r.file_name.clone())
@@ -159,6 +178,26 @@ pub async fn start_scan(
 
         // Ingest into RAM results store for real-time table queries
         results_store.lock().await.extend(processed_records.clone());
+
+        // Cache raw parser output in 100-file ring buffer for one-click encrypted bug reporting
+        {
+            let mut cache = raw_cache.lock().await;
+            for (idx, (record, raw_json)) in batch_results.into_iter().enumerate() {
+                if cache.len() >= 100 {
+                    cache.pop_front();
+                }
+                let row_idx = prev_count as usize + idx;
+                cache.push_back(RawCache::new_redacted(
+                    scan_id.clone(),
+                    row_idx,
+                    record.id,
+                    record.file_name.clone().unwrap_or_default(),
+                    record.file_extension.clone().unwrap_or_default(),
+                    raw_json,
+                    record,
+                ));
+            }
+        }
 
         // Flush batch into SQLite Write-Ahead Logging buffer
         for record in &processed_records {
@@ -217,9 +256,11 @@ fn process_single_file(
     path: &PathBuf,
     exiftool_pool: &Arc<ExiftoolPool>,
     id_gen: &Arc<AtomicU64>,
-) -> Result<FileMetadata, NexGenError> {
+    mapper: &Arc<FieldMapper>,
+) -> Result<(FileMetadata, serde_json::Value), NexGenError> {
     let id = id_gen.fetch_add(1, Ordering::Relaxed);
     let mut meta = FileMetadata::new(id);
+    let mut raw_json = serde_json::Value::Null;
 
     // Basic filesystem details
     meta.file_path = Some(path.to_string_lossy().to_string());
@@ -305,50 +346,24 @@ fn process_single_file(
         }
     }
 
-    // 4. ExifTool Daemon Pool Query for Media Formats
+    // 4. ExifTool Daemon Pool Query for Media Formats with Tiered Self-Healing Mapping
     let ext = meta.file_extension.as_deref().unwrap_or("");
     let media_extensions = [
         "jpg", "jpeg", "png", "tiff", "cr2", "cr3", "nef", "arw", "dng",
         "mp4", "mkv", "mov", "avi", "mp3", "wav", "flac", "m4a",
+        "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx",
     ];
     if media_extensions.contains(&ext) {
-        if let Ok(json_data) = exiftool_pool.query(path) {
-            apply_exiftool_metadata(&mut meta, &json_data);
+        if let Ok(json_data) = exiftool_pool.query_blocking(path) {
+            let _mapping_errors = mapper.apply_to_metadata(&json_data, &mut meta);
+            raw_json = json_data;
         }
     }
 
-    Ok(meta)
-}
+    // If no external parser ran, synthesize raw JSON snapshot of extracted attributes
+    if raw_json.is_null() {
+        raw_json = serde_json::to_value(&meta).unwrap_or(serde_json::Value::Null);
+    }
 
-fn apply_exiftool_metadata(meta: &mut FileMetadata, json: &serde_json::Value) {
-    let item = if let Some(arr) = json.as_array() {
-        arr.first().unwrap_or(json)
-    } else {
-        json
-    };
-
-    if let Some(make) = item.get("Make").and_then(|v| v.as_str()) {
-        meta.exif_make = Some(make.to_string());
-    }
-    if let Some(model) = item.get("Model").and_then(|v| v.as_str()) {
-        meta.exif_model = Some(model.to_string());
-    }
-    if let Some(lens) = item.get("LensModel").and_then(|v| v.as_str()) {
-        meta.exif_lens_model = Some(lens.to_string());
-    }
-    if let Some(focal) = item.get("FocalLength").and_then(|v| v.as_f64()) {
-        meta.exif_focal_length = Some(focal);
-    }
-    if let Some(iso) = item.get("ISO").and_then(|v| v.as_u64()) {
-        meta.exif_iso = Some(iso as u32);
-    }
-    if let Some(lat) = item.get("GPSLatitude").and_then(|v| v.as_f64()) {
-        meta.gps_latitude = Some(lat);
-    }
-    if let Some(lon) = item.get("GPSLongitude").and_then(|v| v.as_f64()) {
-        meta.gps_longitude = Some(lon);
-    }
-    if let Some(alt) = item.get("GPSAltitude").and_then(|v| v.as_f64()) {
-        meta.gps_altitude = Some(alt);
-    }
+    Ok((meta, raw_json))
 }

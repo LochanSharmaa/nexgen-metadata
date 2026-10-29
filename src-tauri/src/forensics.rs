@@ -39,7 +39,7 @@ use windows_sys::Win32::Foundation::{
 };
 use windows_sys::Win32::Storage::FileSystem::{
     BY_HANDLE_FILE_INFORMATION, FILE_BASIC_INFO, FILE_FLAG_BACKUP_SEMANTICS,
-    FILE_SHARE_DELETE, FILE_SHARE_READ, FILE_SHARE_WRITE, FIND_STREAM_DATA,
+    FILE_SHARE_DELETE, FILE_SHARE_READ, FILE_SHARE_WRITE, WIN32_FIND_STREAM_DATA,
     FindClose, FindFirstStreamW, FindNextStreamW, GetFileInformationByHandle,
     GetFileInformationByHandleEx, FileBasicInfo, OPEN_EXISTING,
     CreateFileW,
@@ -443,12 +443,12 @@ fn read_zone_identifier(
 /// reason other than "no more data" or "the file has no extra streams".
 fn enumerate_ads_streams(path: &Path) -> Result<Vec<String>, NexGenError> {
     // FindStreamInfoStandard = 0; the only value currently defined by Windows.
-    const FIND_STREAM_INFO_STANDARD: u32 = 0;
+    const FIND_STREAM_INFO_STANDARD: i32 = 0;
 
     let mut ads_names: Vec<String> = Vec::new();
     let wide_path = to_wide_null(path.as_os_str());
 
-    let mut stream_data: FIND_STREAM_DATA = unsafe { std::mem::zeroed() };
+    let mut stream_data: WIN32_FIND_STREAM_DATA = unsafe { std::mem::zeroed() };
 
     // SAFETY: `wide_path` is a valid NUL-terminated wide string;
     // `stream_data` is zeroed memory of the correct layout.
@@ -456,7 +456,7 @@ fn enumerate_ads_streams(path: &Path) -> Result<Vec<String>, NexGenError> {
         FindFirstStreamW(
             wide_path.as_ptr(),
             FIND_STREAM_INFO_STANDARD,
-            &mut stream_data as *mut FIND_STREAM_DATA as *mut std::ffi::c_void,
+            &mut stream_data as *mut WIN32_FIND_STREAM_DATA as *mut std::ffi::c_void,
             0, // reserved; must be zero
         )
     };
@@ -483,13 +483,13 @@ fn enumerate_ads_streams(path: &Path) -> Result<Vec<String>, NexGenError> {
 
     // Iterate remaining streams.
     loop {
-        let mut next_data: FIND_STREAM_DATA = unsafe { std::mem::zeroed() };
+        let mut next_data: WIN32_FIND_STREAM_DATA = unsafe { std::mem::zeroed() };
 
         // SAFETY: `find_handle` is valid; `next_data` is zeroed memory.
         let ok = unsafe {
             FindNextStreamW(
                 find_handle,
-                &mut next_data as *mut FIND_STREAM_DATA as *mut std::ffi::c_void,
+                &mut next_data as *mut WIN32_FIND_STREAM_DATA as *mut std::ffi::c_void,
             )
         };
 
@@ -518,10 +518,10 @@ fn enumerate_ads_streams(path: &Path) -> Result<Vec<String>, NexGenError> {
     Ok(ads_names)
 }
 
-/// Extract the stream name from a `FIND_STREAM_DATA` entry, convert it from
+/// Extract the stream name from a `WIN32_FIND_STREAM_DATA` entry, convert it from
 /// UTF-16 to UTF-8, and push it onto `acc` — unless it is the default
 /// `::$DATA` stream.
-fn collect_stream_name(data: &FIND_STREAM_DATA, acc: &mut Vec<String>) {
+fn collect_stream_name(data: &WIN32_FIND_STREAM_DATA, acc: &mut Vec<String>) {
     // `cStreamName` is a fixed-size [u16; 296] array (MAX_PATH * 2) with a
     // NUL terminator.
     let nul_pos = data

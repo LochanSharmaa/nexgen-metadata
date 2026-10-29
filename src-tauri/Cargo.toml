@@ -1,19 +1,42 @@
 [package]
 name = "nexgen-metadata"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
-description = "NexGen Metadata — local web forensic server & analysis engine"
+description = "NexGen Metadata — Local Web Forensic Engine & Native Desktop App"
 authors = ["NexGen Forensics"]
 license = "MIT"
 
+# ── Library crate (shared engine, used by both binaries) ─────────────────────
+[lib]
+name = "nexgen_metadata"
+path = "src/lib.rs"
+
+# ── Standalone headless server binary ─────────────────────────────────────────
 [[bin]]
 name = "nexgen-server"
 path = "src/main.rs"
 
+# ── Tauri native desktop window binary ────────────────────────────────────────
+[[bin]]
+name = "nexgen-desktop"
+path = "src/bin/nexgen-desktop.rs"
+
+# ── License key generator tool ────────────────────────────────────────────────
 [[bin]]
 name = "generate_license"
 path = "src/bin/generate_license.rs"
 
+# ── Matrix generator tool ─────────────────────────────────────────────────────
+[[bin]]
+name = "generate_matrix"
+path = "src/bin/generate_matrix.rs"
+
+# ── Developer pre-flight mapping test ─────────────────────────────────────────
+[[bin]]
+name = "test_mapping"
+path = "src/bin/test_mapping.rs"
+
+# ── Core forensic engine dependencies ─────────────────────────────────────────
 [dependencies]
 axum               = { version = "0.8", features = ["macros", "tokio"] }
 tower              = "0.5"
@@ -36,7 +59,7 @@ windows-sys = { version = "0.59", features = [
     "Win32_System_SystemServices",
 ] }
 
-goblin         = { version = "0.9", default-features = false, features = ["elf", "pe", "mach", "endian_fd"] }
+goblin         = { version = "0.9", default-features = false, features = ["pe32", "pe64", "endian_fd"] }
 lopdf          = "0.34"
 blake3         = "1"
 md-5           = "0.10"
@@ -58,14 +81,22 @@ ed25519-dalek  = { version = "2", features = ["rand_core", "serde"] }
 rand           = "0.8"
 base64         = "0.22"
 jsonwebtoken   = "9"
+aes-gcm        = "0.10"
 
 chrono         = { version = "0.4", features = ["serde"] }
 tracing        = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 num_cpus       = "1"
 
+# ── Tauri v2 desktop window (only needed by nexgen-desktop binary) ────────────
+tauri          = { version = "2", features = [] }
+tauri-plugin-shell = "2"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
 [profile.release]
 opt-level     = 3
 lto           = true
-strip         = true
+strip         = false
 codegen-units = 1

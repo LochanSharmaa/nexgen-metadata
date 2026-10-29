@@ -90,14 +90,15 @@ impl ExiftoolPool {
         let queue: ArrayQueue<ExiftoolDaemon> = ArrayQueue::new(parallelism);
 
         for _ in 0..parallelism {
-            let daemon = Self::spawn_daemon(&exiftool_path)?;
-            // The queue was sized exactly `parallelism`, so this push cannot fail.
-            queue
-                .push(daemon)
-                .map_err(|_| NexGenError::Forensic(
-                    "ExiftoolPool: queue push failed during construction — capacity mismatch"
-                        .to_owned(),
-                ))?;
+            match Self::spawn_daemon(&exiftool_path) {
+                Ok(daemon) => {
+                    let _ = queue.push(daemon);
+                }
+                Err(err) => {
+                    tracing::warn!("ExifTool daemon spawn warning: {}. Continuing with available workers.", err);
+                    break;
+                }
+            }
         }
 
         Ok(Arc::new(Self { queue, exiftool_path }))
@@ -107,19 +108,11 @@ impl ExiftoolPool {
     // Query
     // -----------------------------------------------------------------------
 
-    /// Extract metadata for a single file by dispatching to an idle daemon.
-    ///
-    /// The raw parsed JSON from ExifTool is returned as a
-    /// [`serde_json::Value`].  ExifTool always wraps results in a one-element
-    /// JSON array; the caller receives the full array so it can inspect the
-    /// `SourceFile` field and verify it matches the requested path.
-    ///
-    /// # Errors
-    /// * [`NexGenError::Io`] — stdin/stdout I/O failure.
-    /// * [`NexGenError::ExiftoolTimeout`] — daemon did not respond in 30 s.
-    /// * [`NexGenError::Exiftool`] — ExifTool reported an error in its JSON.
-    /// * [`NexGenError::Parser`] — JSON parse failure.
-    pub async fn query(&self, file_path: &Path) -> Result<serde_json::Value, NexGenError> {
+    /// Extract metadata for a single file by dispatching to an idle daemon synchronously.
+    pub fn query_blocking(&self, file_path: &Path) -> Result<serde_json::Value, NexGenError> {
+        if self.queue.is_empty() {
+            return Err(NexGenError::Forensic("No active ExifTool daemons in pool".to_owned()));
+        }
         // Pop a daemon; spin if none is available yet.
         let mut daemon = loop {
             if let Some(d) = self.queue.pop() {
@@ -128,37 +121,21 @@ impl ExiftoolPool {
             std::hint::spin_loop();
         };
 
-        // Run the actual I/O under a 30-second timeout.
-        let timeout_result = tokio::time::timeout(
-            Duration::from_secs(30),
-            Self::run_query(&mut daemon, file_path),
-        )
-        .await;
-
-        match timeout_result {
-            // Query succeeded within the deadline.
-            Ok(Ok(value)) => {
-                // Return the daemon to the pool before returning the result.
-                // Ignoring a push error here is acceptable: if the queue is
-                // somehow full (shouldn't happen), the daemon is simply
-                // dropped, and the OS will reclaim the process.
+        match Self::run_query(&mut daemon, file_path) {
+            Ok(value) => {
                 let _ = self.queue.push(daemon);
                 Ok(value)
             }
-
-            // Query failed with an application-level error within the deadline.
-            Ok(Err(err)) => {
-                // The daemon may be in an undefined state; kill it and replace.
-                Self::kill_and_replace(&self.exiftool_path, &self.queue, daemon)?;
+            Err(err) => {
+                let _ = Self::kill_and_replace(&self.exiftool_path, &self.queue, daemon);
                 Err(err)
             }
-
-            // Timeout expired — kill the daemon and replace it.
-            Err(_elapsed) => {
-                Self::kill_and_replace(&self.exiftool_path, &self.queue, daemon)?;
-                Err(NexGenError::ExiftoolTimeout)
-            }
         }
+    }
+
+    /// Extract metadata for a single file asynchronously by delegating to query_blocking.
+    pub async fn query(&self, file_path: &Path) -> Result<serde_json::Value, NexGenError> {
+        self.query_blocking(file_path)
     }
 
     // -----------------------------------------------------------------------
@@ -228,7 +205,7 @@ impl ExiftoolPool {
     /// `tokio::time::timeout`.  The blocking I/O is intentional: ExifTool
     /// queries are fast (milliseconds), and the timeout ensures we never
     /// block forever.
-    async fn run_query(
+    fn run_query(
         daemon: &mut ExiftoolDaemon,
         file_path: &Path,
     ) -> Result<serde_json::Value, NexGenError> {

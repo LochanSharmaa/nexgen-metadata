@@ -24,10 +24,7 @@ use serde::{Deserialize, Serialize};
 /// Master NexGen Forensics Ed25519 Public Key.
 /// Embedded directly in the binary — zero internet connection required for validation.
 pub const EMBEDDED_PUBLIC_KEY: [u8; 32] = [
-    0x9a, 0x4d, 0x7b, 0x12, 0xe5, 0x88, 0x31, 0x09,
-    0xcf, 0x44, 0x67, 0x91, 0x0a, 0x1b, 0x3d, 0x5e,
-    0x82, 0x24, 0x7f, 0xb6, 0xc1, 0x9d, 0xe4, 0x3a,
-    0x57, 0x81, 0x9c, 0xd0, 0xbb, 0x14, 0x35, 0xa9,
+    106, 15, 72, 10, 1, 174, 77, 183, 250, 24, 151, 158, 187, 55, 189, 37, 83, 19, 49, 244, 227, 61, 143, 232, 203, 236, 43, 146, 7, 90, 16, 96
 ];
 
 /// Ephemeral HMAC secret generated at server boot for signing internal local session JWTs.
