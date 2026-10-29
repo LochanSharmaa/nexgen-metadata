@@ -1,0 +1,31 @@
+# Rust build artifacts
+target/
+**/*.rs.bk
+Cargo.lock
+
+# Node / Frontend artifacts
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Database & Scans
+*.db
+*.db-wal
+*.db-shm
+emergency_dump.json
+nexgen_*.db
+
+# OS / Temporary files
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+
+# ExifTool binaries (large binary)
+exiftool.exe
+exiftool
+
+# Secrets / Private Keys (Never commit these!)
+nexgen_private.key
+*.pem
