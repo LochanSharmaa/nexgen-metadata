@@ -30,6 +30,12 @@ exiftool_extracted/
 src-tauri/exiftool_files/
 src-tauri/gen/
 
-# Secrets / Private Keys (Never commit these!)
-nexgen_private.key
+# Secrets / Cryptographic Keys (Never commit these!)
+*.key
+*.pub
 *.pem
+*.pfx
+*.p12
+*.keystore
+nexgen_private.key
+nexgen_public.key

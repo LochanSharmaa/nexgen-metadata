@@ -249,7 +249,6 @@ nexgen-metadata/
 ├── tailwind.config.js               # Lavender / Purple palette theme tokens
 ├── REA_evidence.md                  # Legacy Field Parity & Reverse-Engineering Audit Report
 ├── legacy_mapping.json              # Canonical 174-field legacy schema definition
-├── nexgen_public.key                # Ed25519 Master License Public Key
 ├── MAPPING_AUDIT.md                 # CI/CD Pre-Flight Mapping Validation Audit
 ├── dist/                            # Production-compiled React web bundles
 ├── src/                             # React 18 Forensic Application
