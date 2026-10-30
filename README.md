@@ -21,7 +21,61 @@
 
 ## 📑 Executive Overview
 
-**NexGen Metadata** is a defense-grade digital forensics engine that automates high-speed inspection, extraction, and verification of forensic metadata across tens of thousands of evidence files. Built on a hybrid architecture combining a high-performance **Rust / Axum backend**, a **persistent ExifTool daemon pool**, and a **Tauri v2 native desktop interface**, NexGen Metadata operates strictly on `127.0.0.1` with **zero external telemetry**, zero cloud dependencies, and verifiable chain-of-custody tracking.
+**NexGen Metadata™** is an enterprise-grade, defense-hardened digital forensics and deep triage platform engineered for high-throughput metadata acquisition, artifact reconstruction, and court-admissible verification. Developed specifically for **Law Enforcement Cybercrime Units, Military Intelligence Laboratories, DFIR Incident Responders, and E-Discovery Specialists**, NexGen Metadata automates the parallelized inspection of tens of thousands of heterogeneous evidence files without risking evidentiary contamination or data leakage.
+
+Designed around a strict **zero-trust, air-gapped threat model**, the entire system operates exclusively on `127.0.0.1` with **zero external telemetry**, zero cloud callbacks, and zero third-party tracking. The engine merges low-level systems programming in **Rust 2021**, a persistent **ExifTool daemon worker pool**, native deep format parsers (`goblin` for PE binaries, `lopdf` for PDF AST structures, and Win32 NTFS APIs), and a reactive **Tauri v2 native desktop workspace**.
+
+### 🌟 What Makes NexGen Metadata Advanced?
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                               NEXGEN METADATA CORE ENGINE                              │
+├──────────────────────────┬──────────────────────────┬──────────────────────────────────┤
+│ ⚡ HIGH-THROUGHPUT I/O    │ 🔬 DEEP ARTIFACT MINING  │ 🧬 AUTONOMOUS SELF-HEALING       │
+│ • jwalk Multi-thread Walk│ • NTFS $STANDARD MACB    │ • 4-Tier Fallback Cascade        │
+│ • Rayon Work-Stealing    │ • Timestomping Heuristic │ • 360+ Tag Golden Matrix         │
+│ • Persistent Exif Pool   │ • ADS Zone.Identifier    │ • 174 Forensic Field Parity      │
+│ • 1,000+ Files / Sec     │ • PE Imphash & Entropy   │ • Levenshtein Fuzzy Alignment    │
+│ • Single-Pass 7-Hashing  │ • PDF Revision Triage    │ • Zero-Loss Schema Normalization │
+├──────────────────────────┼──────────────────────────┼──────────────────────────────────┤
+│ 🛡️ DEFENSE CRYPTOGRAPHY  │ 🔒 ZERO-LEAK DIAGNOSTICS │ 🖥️ LOW-LATENCY WORKSPACE         │
+│ • BLAKE3 / SHA-256 / 512 │ • 100-File Ring Buffer   │ • Tauri v2 Native Desktop        │
+│ • XXH3-128 / MD5 / CRC32 │ • AES-256-GCM Container  │ • TanStack 60 FPS Virtualization │
+│ • Ed25519 Signed License │ • Automated PII Scrubbing│ • dnd-kit Drag-and-Drop Columns  │
+│ • Cryptographic Manifest │ • Safe Triage Egress     │ • Instant Field Checklists (10x) │
+└──────────────────────────┴──────────────────────────┴──────────────────────────────────┘
+```
+
+#### 1. Low-Level Kernel & Filesystem Forensics
+* **Dual-Record NTFS MACB Reconstruction:** Directly interrogates Windows NTFS master file records (`$STANDARD_INFORMATION` and `$FILE_NAME`) via native Win32 `GetFileInformationByHandleEx` calls, exposing subtle sub-second microsecond discrepancies.
+* **Anti-Forensic Timestomping Detection:** Automatically cross-references filesystem timestamps against internal container timestamps (e.g., EXIF `DateTimeOriginal`, PDF `CreationDate`, PE `TimeDateStamp`) to flag manipulated metadata.
+* **Alternate Data Streams (ADS) & Origin Forensics:** Recursively enumerates NTFS stream forks, extracting `Zone.Identifier` stream payloads to uncover internet download origins, including raw `ZoneId`, `HostUrl`, and `ReferrerUrl`.
+
+#### 2. Deep Native Binary & Document Introspection
+* **Portable Executable (PE) Structural Analysis:** Powered by `goblin`, NexGen dissects PE32/PE32+/ARM64 executables, calculating section-by-section **Shannon Entropy** ($H = -\sum p \log_2 p$) on a $0.0 - 8.0$ scale to detect packed, obfuscated, or encrypted payloads. It normalizes import descriptors into an industry-standard **Imphash (MD5)** for threat intelligence pivoting, extracts Authenticode digital certificate directory tables, and validates subsystem flags.
+* **PDF Abstract Syntax Tree (AST) Dissection:** Powered by `lopdf`, it reconstructs PDF document trees without executing untrusted document parsers. It audits incremental revisions, detects linearized fast-web structures, identifies interactive `/AcroForm` data, flags hidden `/Annots` and `/EmbeddedFiles` payloads, and verifies cryptographic `/SigFlags` digital signatures.
+
+#### 3. Single-Pass 7-Hash Cryptographic Streaming Pipeline
+Standard forensic tools read files from disk multiple times to calculate disparate hash algorithms. NexGen Metadata’s custom `DynamicReader` reads evidence files in a single sequential I/O pass, computing **7 cryptographic and non-cryptographic hashes simultaneously**:
+$$\text{BLAKE3} \quad\vert\quad \text{SHA-256} \quad\vert\quad \text{SHA-512} \quad\vert\quad \text{SHA-1} \quad\vert\quad \text{MD5} \quad\vert\quad \text{CRC-32} \quad\vert\quad \text{XXH3 (128-bit)}$$
+This dramatically reduces disk head thrashing and read latency across large NVMe arrays and cold forensic storage images.
+
+#### 4. 4-Tier Autonomous Self-Healing Metadata Matrix
+Metadata tags emitted by EXIF, XMP, IPTC, QuickTime, RIFF, and ID3 parsers are notoriously fragmented and non-deterministic across manufacturers and firmware releases. NexGen Metadata incorporates an autonomous 4-tier self-healing resolution engine (`field_mapper.rs`):
+* **Tier 0:** Instantaneous $O(1)$ lookup against an embedded 360+ tag **Golden Mapping Matrix**.
+* **Tier 1:** Strict canonical namespace resolution.
+* **Tier 2:** Suffix extraction and typo-tolerant **Levenshtein Distance** calculation ($\le 2$).
+* **Tier 3:** Case-insensitive prefix and suffix traversal.
+* Delivers complete **100% parity across 174 legacy forensic fields** across 10 specialized categories reverse-engineered from enterprise forensic tools.
+
+#### 5. Courtroom-Admissible Chain of Custody
+* **Tamper-Evident Cryptographic Manifests:** Every exported dataset (Forensic CSV, Multi-Sheet XLSX, Structured JSON) automatically generates a companion `nexgen_manifest.json` sealing the export timestamp, operator identity, record count, and dual BLAKE3 / SHA-256 integrity hashes for courtroom admissibility under Federal Rule of Evidence 902.
+* **Offline Ed25519 Asymmetric Licensing:** Enforces enterprise licensing through offline public-key cryptography—ensuring operational units remain fully functional inside SCIFs and air-gapped isolation without calling out to any licensing server.
+
+#### 6. Privacy-Preserving Diagnostic Container (`.nexgenbug`)
+When anomalous parser outputs occur in classified investigations, analysts cannot send raw files or filepaths offsite. NexGen maintains a thread-safe 100-file in-memory ring buffer of raw parser inputs. With a single click, analysts generate an **AES-256-GCM encrypted** `.nexgenbug` bundle where:
+* All volume identifiers, usernames, and parent directory hierarchies are cryptographically redacted to `<REDACTED>`.
+* Only the isolated file metadata and parser AST are encrypted using the public support key, enabling forensic troubleshooting without compromising sensitive evidentiary chains.
 
 ---
 
@@ -94,7 +148,7 @@ graph TD
 
 ### 1. 🧬 Self-Healing Mapping Engine (`field_mapper.rs`)
 ExifTool and deep parsers output non-deterministic tags depending on file format and camera model (e.g., `Make`, `EXIF:Make`, `XMP:Make`, `QuickTime:Make`). In an air-gapped forensic lab, any unmapped tag causes silent data loss.
-* **Tier 0 (Golden Matrix):** O(1) instantaneous lookup against an embedded 258-tag matrix (`mapping_matrix.json`).
+* **Tier 0 (Golden Matrix):** O(1) instantaneous lookup against an embedded 360+ tag matrix (`mapping_matrix.json`) matching 174 forensic fields across 10 specialized domains.
 * **Tier 1 (Strict):** Direct key resolution.
 * **Tier 2 (Suffix & Levenshtein):** Matches tag suffixes (e.g., `:Make` -> `Make`) and typo-tolerant Levenshtein distance calculations ($\le 2$).
 * **Tier 3 (Case-Insensitive):** Case-folded suffix comparisons.
@@ -132,7 +186,7 @@ The interface features an analyst-centric **3-Pane Workflow Layout**:
 
 | Pane | Section | Description |
 |:---:|---|---|
-| **Left** | **Categories Navigator** | 7 core forensic groups: File System, Hashes, NTFS & Forensics, Entropy & Magic, EXIF & Optics, PE Binaries, Documents. |
+| **Left** | **Categories Navigator** | 10 specialized forensic categories: File System (15), Hashes & Checksums (15), Image / EXIF (20), Camera & Lens (23), GPS & Geospatial (12), Video Codecs (19), Audio Streams (23), Documents (23), PDF Specific (11), and Forensics & PE (13) — total 174 fields. |
 | **Center** | **Field Checklist** | Granular field-level toggles with bulk "Select All" / "Clear All" controls per category. |
 | **Right** | **Column Sequencer** | Drag-and-drop column order arranger powered by `@dnd-kit/core` with instant remove / restore pills. |
 | **Bottom** | **Live Virtual Viewport** | 60 FPS streaming data viewport rendered using `@tanstack/react-virtual`, with row-level `#` indexing and one-click diagnostic bug reporting. |
@@ -196,15 +250,18 @@ nexgen-metadata/
 ├── package.json                     # Frontend dependencies
 ├── vite.config.ts                   # Vite bundler configuration
 ├── tailwind.config.js               # Lavender / Purple palette theme tokens
+├── REA_evidence.md                  # Legacy Field Parity & Reverse-Engineering Audit Report
+├── legacy_mapping.json              # Canonical 174-field legacy schema definition
+├── nexgen_public.key                # Ed25519 Master License Public Key
 ├── MAPPING_AUDIT.md                 # CI/CD Pre-Flight Mapping Validation Audit
 ├── dist/                            # Production-compiled React web bundles
 ├── src/                             # React 18 Forensic Application
 │   ├── App.tsx                      # Primary 3-Pane Forensic Workspace
 │   ├── LoginView.tsx                # Cryptographic License Gate
-│   ├── types.ts                     # TypeScript definitions & field schema
+│   ├── types.ts                     # TypeScript definitions & 174-field schema
 │   ├── components/
 │   │   ├── ColumnSequencer.tsx      # dnd-kit Drag-and-drop column arranger
-│   │   ├── FieldSelector.tsx        # Multi-category field selection checklist
+│   │   ├── FieldSelector.tsx        # 10-category field selection checklist
 │   │   └── PreviewTable.tsx         # Virtualized table + One-Click Bug Reporter
 │   └── hooks/
 │       └── useScan.ts               # SSE Progress & Scan Session Hook
@@ -212,7 +269,7 @@ nexgen-metadata/
     ├── Cargo.toml                   # Native engine dependencies
     ├── build.rs                     # Tauri build & resource generator
     ├── tauri.conf.json              # Window geometry & desktop capabilities
-    ├── mapping_matrix.json          # Pre-compiled Tier 0 Golden Matrix (258 tags)
+    ├── mapping_matrix.json          # Pre-compiled Tier 0 Golden Matrix (360+ tags)
     ├── icons/                       # Multi-resolution application icons
     └── src/
         ├── lib.rs                   # Core forensic library & Axum router
