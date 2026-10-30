@@ -25,26 +25,23 @@
 
 Designed around a strict **zero-trust, air-gapped threat model**, the entire system operates exclusively on `127.0.0.1` with **zero external telemetry**, zero cloud callbacks, and zero third-party tracking. The engine merges low-level systems programming in **Rust 2021**, a persistent **ExifTool daemon worker pool**, native deep format parsers (`goblin` for PE binaries, `lopdf` for PDF AST structures, and Win32 NTFS APIs), and a reactive **Tauri v2 native desktop workspace**.
 
-### 🌟 What Makes NexGen Metadata Advanced?
+### Core Architecture & Engineering Specifications
 
-```
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│                               NEXGEN METADATA CORE ENGINE                              │
-├──────────────────────────┬──────────────────────────┬──────────────────────────────────┤
-│ ⚡ HIGH-THROUGHPUT I/O    │ 🔬 DEEP ARTIFACT MINING  │ 🧬 AUTONOMOUS SELF-HEALING       │
-│ • jwalk Multi-thread Walk│ • NTFS $STANDARD MACB    │ • 4-Tier Fallback Cascade        │
-│ • Rayon Work-Stealing    │ • Timestomping Heuristic │ • 360+ Tag Golden Matrix         │
-│ • Persistent Exif Pool   │ • ADS Zone.Identifier    │ • 174 Forensic Field Parity      │
-│ • 1,000+ Files / Sec     │ • PE Imphash & Entropy   │ • Levenshtein Fuzzy Alignment    │
-│ • Single-Pass 7-Hashing  │ • PDF Revision Triage    │ • Zero-Loss Schema Normalization │
-├──────────────────────────┼──────────────────────────┼──────────────────────────────────┤
-│ 🛡️ DEFENSE CRYPTOGRAPHY  │ 🔒 ZERO-LEAK DIAGNOSTICS │ 🖥️ LOW-LATENCY WORKSPACE         │
-│ • BLAKE3 / SHA-256 / 512 │ • 100-File Ring Buffer   │ • Tauri v2 Native Desktop        │
-│ • XXH3-128 / MD5 / CRC32 │ • AES-256-GCM Container  │ • TanStack 60 FPS Virtualization │
-│ • Ed25519 Signed License │ • Automated PII Scrubbing│ • dnd-kit Drag-and-Drop Columns  │
-│ • Cryptographic Manifest │ • Safe Triage Egress     │ • Instant Field Checklists (10x) │
-└──────────────────────────┴──────────────────────────┴──────────────────────────────────┘
-```
+| Capability Domain | Subsystem & Technical Implementation | Forensic Value & Standards Compliance |
+|:---|:---|:---|
+| **High-Throughput Ingestion** | `jwalk` parallel directory walker, `rayon` work-stealing scheduler, persistent `-stay_open` ExifTool worker pool | Sustained throughput exceeding 1,000+ files/second without process-spawning bottlenecks |
+| **Kernel-Level NTFS Forensics** | Win32 `GetFileInformationByHandleEx` interrogation of `$STANDARD_INFORMATION` and `$FILE_NAME` | Dual-record MACB reconstruction; sub-second timestomping heuristic anomaly detection |
+| **Origin & Stream Forensics** | Recursive Alternate Data Stream (ADS) walker, `Zone.Identifier` stream payload parser | Direct extraction of download origins (`ZoneId`, source `HostUrl`, and `ReferrerUrl`) |
+| **Deep Binary Inspection** | Native `goblin` PE parser, section-level Shannon entropy calculator ($0.0 - 8.0$) | Detection of packed/encrypted payloads, Authenticode validation, normalized Imphash (MD5) |
+| **Document AST Reconstruction** | Native `lopdf` parser, structural catalog walker, cryptographic signature validator | Incremental revision auditing, fast-web linearized triage, AcroForms, `/Annots`, `/SigFlags` |
+| **Single-Pass 7-Hash Engine** | Streaming `DynamicReader` pipeline computing BLAKE3, SHA-256, SHA-512, SHA-1, MD5, CRC-32, XXH3-128 | Zero disk re-reads; minimizes head thrashing across NVMe and cold disk images |
+| **Autonomous Field Healing** | 4-tier fallback cascade (`Tier 0` Golden Matrix through `Tier 3`), Levenshtein matching ($\le 2$) | 100% field parity across 174 forensic fields and 360+ tags, eliminating silent tag loss |
+| **Court-Admissible Manifests** | Automated companion `nexgen_manifest.json` generation with BLAKE3 & SHA-256 verification | Tamper-evident evidentiary chain of custody adhering to Federal Rule of Evidence 902 |
+| **Zero-Exposure Triage** | Thread-safe 100-file in-memory ring buffer, AES-256-GCM containerization (`.nexgenbug`) | Sanitized diagnostics with automatic path/PII redaction (`<REDACTED>`) for air-gapped labs |
+
+---
+
+### Key Capabilities in Detail
 
 #### 1. Low-Level Kernel & Filesystem Forensics
 * **Dual-Record NTFS MACB Reconstruction:** Directly interrogates Windows NTFS master file records (`$STANDARD_INFORMATION` and `$FILE_NAME`) via native Win32 `GetFileInformationByHandleEx` calls, exposing subtle sub-second microsecond discrepancies.
