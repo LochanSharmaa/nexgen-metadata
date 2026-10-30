@@ -1,3 +1,5 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 //! nexgen-desktop.rs — NexGen Metadata Tauri v2 Desktop Application Entry Point
 //!
 //! This binary wraps the existing Axum forensic engine and React SPA inside a
@@ -12,10 +14,6 @@
 //!   - Zero IPC overhead (WebView talks HTTP to the local Axum server directly).
 //!   - The React UI is identical between the browser and desktop modes.
 //!   - Tauri handles OS-native menus, window chrome, tray icon, and lifecycle.
-
-// On Windows, hide the console window in release builds so only the native
-// window appears. The `#![windows_subsystem = "windows"]` attribute does this.
-#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use nexgen_metadata::run_axum_server;
 use tauri::Emitter;
@@ -33,6 +31,12 @@ fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {
+            // Safe persistent extraction to %LOCALAPPDATA%\NexGen\bin (avoiding %TEMP%)
+            match nexgen_metadata::exiftool_pool::ensure_exiftool_provisioned() {
+                Ok(path) => tracing::info!("✓ ExifTool verified in persistent safe directory: {}", path.display()),
+                Err(err) => tracing::warn!("ExifTool safe provisioning note: {}", err),
+            }
+
             let app_handle = app.handle().clone();
 
             // ─── Spawn the Axum forensic engine in the background ───────────

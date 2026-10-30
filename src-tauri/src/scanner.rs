@@ -278,6 +278,13 @@ fn process_single_file(
         meta.size_bytes = Some(fs_meta.len());
         meta.size_human = Some(human_size(fs_meta.len()));
         meta.is_readonly = Some(fs_meta.permissions().readonly());
+
+        // Legacy 174 Parity: filesystem fields
+        meta.file_size_bytes = Some(fs_meta.len().to_string());
+        meta.file_size_human = meta.size_human.clone();
+        meta.is_read_only = Some(if fs_meta.permissions().readonly() { "Yes" } else { "No" }.to_string());
+        meta.is_symlink = Some("No".to_string());
+        meta.file_permissions = Some(if fs_meta.permissions().readonly() { "Read-Only" } else { "Read-Write" }.to_string());
     }
 
     // 1. Single-Pass Streaming Read & Hashing Engine
@@ -291,6 +298,14 @@ fn process_single_file(
     meta.hash_sha512 = Some(read_result.sha512_hex);
     meta.hash_crc32 = Some(read_result.crc32_hex);
     meta.hash_xxhash3 = Some(read_result.xxhash3_hex);
+
+    // Legacy 174 Parity: duplicate hashes to legacy field names
+    meta.md5_hash = meta.hash_md5.clone();
+    meta.sha1_hash = meta.hash_sha1.clone();
+    meta.sha256_hash = meta.hash_sha256.clone();
+    meta.sha512_hash = meta.hash_sha512.clone();
+    meta.crc32 = meta.hash_crc32.clone();
+
     meta.shannon_entropy = Some(read_result.shannon_entropy);
     meta.entropy_classification = Some(crate::models::entropy_class(read_result.shannon_entropy).to_string());
     meta.magic_bytes_hex = Some(
@@ -321,6 +336,13 @@ fn process_single_file(
             meta.volume_serial = ntfs.volume_serial;
             meta.link_count = ntfs.link_count;
         }
+
+            // Legacy parity: date fields
+            if let Some(ref macb) = meta.macb {
+                meta.creation_date = macb.created.clone();
+                meta.modification_date = macb.modified.clone();
+                meta.access_date = macb.accessed.clone();
+            }
 
         if let Ok(ads) = get_ads_info(path) {
             meta.ads_zone_id = ads.zone_id;

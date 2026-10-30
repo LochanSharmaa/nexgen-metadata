@@ -20,24 +20,49 @@ pub fn parse_pe(data: &[u8], metadata: &mut FileMetadata) -> Result<(), NexGenEr
     };
 
     metadata.pe_machine_type = Some(pe.header.coff_header.machine);
-    metadata.pe_architecture = Some(match pe.header.coff_header.machine {
+    let arch_str = match pe.header.coff_header.machine {
         0x014c => "x86 (32-bit)".to_string(),
-        0x8664 => "x86_64 (64-bit AMD64)".to_string(),
+        0x8664 => "x64 (64-bit)".to_string(),
         0xAA64 => "ARM64".to_string(),
         0x01c0 => "ARM".to_string(),
         0x0200 => "IA64".to_string(),
         other => format!("Unknown (0x{:04X})", other),
-    });
+    };
+    metadata.pe_architecture = Some(arch_str);
 
     let raw_timestamp = pe.header.coff_header.time_date_stamp;
     metadata.pe_compile_timestamp_raw = Some(raw_timestamp);
     if let Some(dt) = DateTime::<Utc>::from_timestamp(raw_timestamp as i64, 0) {
         metadata.pe_compile_timestamp = Some(dt.to_rfc3339());
+        metadata.pe_compile_date = Some(dt.format("%Y-%m-%d %H:%M:%S UTC").to_string());
     }
 
-    metadata.pe_section_count = Some(pe.sections.len() as u16);
+    metadata.pe_section_count = Some(pe.sections.len().to_string());
+    metadata.pe_import_count = Some(pe.imports.len().to_string());
+    metadata.pe_export_count = Some(pe.exports.len().to_string());
     metadata.pe_is_dll = Some((pe.header.coff_header.characteristics & 0x2000) != 0);
     metadata.pe_entry_point = Some(pe.entry as u64);
+
+    // Legacy PE Forensic fields
+    let is_signed = !pe.certificates.is_empty();
+    metadata.pe_signed = Some(if is_signed { "Yes".to_string() } else { "No".to_string() });
+    metadata.pe_authenticode_status = Some(if is_signed { PeAuthenticodeStatus::Valid } else { PeAuthenticodeStatus::Unsigned });
+
+    // File Entropy & Magic Bytes
+    let entropy = calculate_section_entropy(data);
+    metadata.file_entropy = Some(format!("{:.4}", entropy));
+    metadata.shannon_entropy = Some(entropy);
+    let magic_hex = data.iter().take(16).map(|b| format!("{:02X}", b)).collect::<Vec<_>>().join(" ");
+    metadata.magic_bytes_header = Some(magic_hex.clone());
+    metadata.magic_bytes_hex = Some(magic_hex);
+
+    // Version Information
+    metadata.pe_original_filename = find_version_string(data, "OriginalFilename");
+    metadata.pe_product_name = find_version_string(data, "ProductName");
+    metadata.pe_product_version = find_version_string(data, "ProductVersion");
+    metadata.pe_company_name = find_version_string(data, "CompanyName");
+    metadata.pe_file_version = find_version_string(data, "FileVersion");
+    metadata.pe_description = find_version_string(data, "FileDescription");
 
     if let Some(opt) = pe.header.optional_header {
         let (std, win) = (opt.standard_fields, opt.windows_fields);
@@ -61,8 +86,7 @@ pub fn parse_pe(data: &[u8], metadata: &mut FileMetadata) -> Result<(), NexGenEr
         });
     }
 
-    metadata.pe_import_count = Some(pe.imports.len());
-    metadata.pe_export_count = Some(pe.exports.len());
+
 
     // Imphash calculation: sorted lowercased lib.func MD5
     let mut import_entries = Vec::new();
@@ -95,13 +119,62 @@ pub fn parse_pe(data: &[u8], metadata: &mut FileMetadata) -> Result<(), NexGenEr
     }
     metadata.pe_section_max_entropy = Some(max_entropy);
 
-    if pe.certificates.is_empty() {
-        metadata.pe_authenticode_status = Some(PeAuthenticodeStatus::Unsigned);
-    } else {
-        metadata.pe_authenticode_status = Some(PeAuthenticodeStatus::Valid);
+    Ok(())
+}
+
+/// Search PE binary data for a UTF-16LE encoded version resource string.
+/// Looks for the key name in UTF-16LE, then reads the null-terminated UTF-16LE value after it.
+fn find_version_string(data: &[u8], key: &str) -> Option<String> {
+    // Encode key as UTF-16LE bytes for searching
+    let key_utf16: Vec<u8> = key.encode_utf16()
+        .flat_map(|c| c.to_le_bytes())
+        .collect();
+    
+    if key_utf16.is_empty() {
+        return None;
     }
 
-    Ok(())
+    // Search for the key in the binary data
+    let data_len = data.len();
+    let key_len = key_utf16.len();
+    
+    for i in 0..data_len.saturating_sub(key_len) {
+        if &data[i..i + key_len] == key_utf16.as_slice() {
+            // Found key. Skip past the key and any padding/null chars
+            let mut pos = i + key_len;
+            
+            // Skip null terminator of the key and any padding (align to 4 bytes)
+            while pos + 1 < data_len && data[pos] == 0 && data[pos + 1] == 0 {
+                pos += 2;
+            }
+            // Align to even boundary
+            if pos % 2 != 0 {
+                pos += 1;
+            }
+            
+            // Read UTF-16LE value until double-null or max 512 chars
+            let mut value_chars: Vec<u16> = Vec::new();
+            let max_chars = 512;
+            while pos + 1 < data_len && value_chars.len() < max_chars {
+                let ch = u16::from_le_bytes([data[pos], data[pos + 1]]);
+                if ch == 0 {
+                    break;
+                }
+                value_chars.push(ch);
+                pos += 2;
+            }
+            
+            if !value_chars.is_empty() {
+                let result = String::from_utf16_lossy(&value_chars);
+                let trimmed = result.trim();
+                if !trimmed.is_empty() && trimmed.chars().all(|c| !c.is_control()) {
+                    return Some(trimmed.to_string());
+                }
+            }
+        }
+    }
+    
+    None
 }
 
 fn calculate_section_entropy(data: &[u8]) -> f64 {

@@ -21,15 +21,94 @@
 //     the pool is always at full capacity.
 //   * `NexGenError::ExiftoolTimeout` is returned to the caller.
 
-use std::io::{BufRead, BufReader, BufWriter, Write};
+use std::io::{BufRead, BufReader, BufWriter, Cursor, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Child, ChildStdin, ChildStdout, Command, Stdio};
 use std::sync::Arc;
 use std::time::Duration;
+use zip::ZipArchive;
 
 use crossbeam::queue::ArrayQueue;
 
 use crate::errors::NexGenError;
+
+/// Embedded ExifTool binary and runtime archive.
+/// Compiled directly into the standalone binary for zero-configuration portability.
+pub static EMBEDDED_EXIFTOOL_ZIP: &[u8] = include_bytes!("exiftool.zip");
+
+/// Resolves the safe persistent path %LOCALAPPDATA%\NexGen\bin and extracts
+/// the embedded ExifTool suite if not already present.
+///
+/// CRITICAL SECURITY NOTE: Never extracts to %TEMP% to prevent antivirus
+/// false-positive execution blocks.
+pub fn ensure_exiftool_provisioned() -> Result<PathBuf, NexGenError> {
+    // 1. Resolve %LOCALAPPDATA%\NexGen\bin via directories crate
+    let target_dir = if let Some(base_dirs) = directories::BaseDirs::new() {
+        base_dirs.data_local_dir().join("NexGen").join("bin")
+    } else {
+        let local_app_data = std::env::var("LOCALAPPDATA").unwrap_or_else(|_| "C:\\AppData".to_string());
+        PathBuf::from(local_app_data).join("NexGen").join("bin")
+    };
+
+    if !target_dir.exists() {
+        std::fs::create_dir_all(&target_dir)?;
+        tracing::info!("Created safe persistent AppData directory: {}", target_dir.display());
+    }
+
+    let exiftool_exe = target_dir.join("exiftool.exe");
+
+    // 2. Unpack if not already present or if binary size is 0
+    let needs_extract = !exiftool_exe.exists()
+        || std::fs::metadata(&exiftool_exe).map(|m| m.len()).unwrap_or(0) == 0;
+
+    if needs_extract {
+        tracing::info!(
+            "Unpacking embedded ExifTool suite ({} bytes) to safe AppData path: {}",
+            EMBEDDED_EXIFTOOL_ZIP.len(),
+            target_dir.display()
+        );
+
+        let reader = Cursor::new(EMBEDDED_EXIFTOOL_ZIP);
+        let mut archive = ZipArchive::new(reader).map_err(|e| {
+            NexGenError::Parser {
+                file: "embedded:exiftool.zip".to_string(),
+                reason: format!("Failed to read embedded ExifTool zip archive: {}", e),
+            }
+        })?;
+
+        for i in 0..archive.len() {
+            let mut file = archive.by_index(i).map_err(|e| {
+                NexGenError::Parser {
+                    file: format!("zip_entry_{}", i),
+                    reason: format!("Corrupt zip entry in embedded ExifTool archive: {}", e),
+                }
+            })?;
+
+            let outpath = match file.enclosed_name() {
+                Some(path) => target_dir.join(path),
+                None => continue,
+            };
+
+            if file.is_dir() {
+                std::fs::create_dir_all(&outpath)?;
+            } else {
+                if let Some(p) = outpath.parent() {
+                    if !p.exists() {
+                        std::fs::create_dir_all(p)?;
+                    }
+                }
+                let mut outfile = std::fs::File::create(&outpath)?;
+                std::io::copy(&mut file, &mut outfile)?;
+            }
+        }
+
+        tracing::info!("✓ Embedded ExifTool successfully deployed to {}", exiftool_exe.display());
+    } else {
+        tracing::debug!("Verified existing ExifTool in safe AppData: {}", exiftool_exe.display());
+    }
+
+    Ok(exiftool_exe)
+}
 
 // ---------------------------------------------------------------------------
 // ExiftoolDaemon
@@ -82,7 +161,14 @@ impl ExiftoolPool {
     /// # Errors
     /// Returns [`NexGenError::Io`] if the binary cannot be spawned (e.g.
     /// `exiftool_path` does not exist or is not executable).
-    pub fn new(exiftool_path: PathBuf) -> Result<Arc<Self>, NexGenError> {
+    pub fn new(mut exiftool_path: PathBuf) -> Result<Arc<Self>, NexGenError> {
+        // Automatically ensure safe AppData provisioning if path does not exist
+        if !exiftool_path.exists() {
+            if let Ok(safe_path) = ensure_exiftool_provisioned() {
+                exiftool_path = safe_path;
+            }
+        }
+
         let parallelism = std::thread::available_parallelism()
             .map(|n| n.get())
             .unwrap_or(4);
@@ -163,19 +249,26 @@ impl ExiftoolPool {
 
     /// Spawn one ExifTool daemon process and wrap its pipes.
     fn spawn_daemon(exiftool_path: &Path) -> Result<ExiftoolDaemon, NexGenError> {
-        let mut child = Command::new(exiftool_path)
-            .args([
-                "-stay_open",
-                "True",
-                "-@",
-                "-",
-                "-charset",
-                "filename=utf8",
-            ])
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::null())
-            .spawn()?;
+        let mut cmd = Command::new(exiftool_path);
+        cmd.args([
+            "-stay_open",
+            "True",
+            "-@",
+            "-",
+            "-charset",
+            "filename=utf8",
+        ])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null());
+
+        #[cfg(windows)]
+        {
+            use std::os::windows::process::CommandExt;
+            cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW: prevent CMD windows on Windows
+        }
+
+        let mut child = cmd.spawn()?;
 
         // Take ownership of the stdio pipes.  These are guaranteed `Some`
         // because we passed `Stdio::piped()` above; a missing pipe indicates

@@ -484,6 +484,143 @@ impl FieldMapper {
         map_str!(pdf_producer, "Producer");
         map_str!(pdf_creator_app, "Creator");
 
+        // ── Legacy 174 Parity: File System ──────────────────────────────
+        map_str!(mime_type, "MIMEType");
+
+        // ── Legacy 174 Parity: Image / EXIF ─────────────────────────────
+        map_str!(image_width, "ImageWidth");
+        map_str!(image_height, "ImageHeight");
+        map_str!(bit_depth, "BitsPerSample");
+        map_str!(color_space, "ColorSpace");
+        map_str!(color_profile, "ProfileDescription");
+        map_str!(orientation, "Orientation");
+        map_str!(compression, "Compression");
+        map_str!(has_alpha_channel, "AlphaChannel");
+        map_str!(exif_version, "ExifVersion");
+        map_str!(date_taken_original, "DateTimeOriginal");
+        map_str!(date_digitized, "CreateDate");
+        map_str!(software, "Software");
+        map_str!(host_computer, "HostComputer");
+        map_str!(description_caption, "ImageDescription");
+        map_str!(user_comment, "UserComment");
+        map_str!(copyright, "Copyright");
+        map_str!(artist_author, "Artist");
+        map_str!(rating, "Rating");
+
+        // Megapixels: calculated from ImageWidth * ImageHeight
+        if let (Some(ref w_str), Some(ref h_str)) = (&meta.image_width, &meta.image_height) {
+            if let (Ok(w), Ok(h)) = (w_str.parse::<f64>(), h_str.parse::<f64>()) {
+                let mp = (w * h) / 1_000_000.0;
+                meta.megapixels = Some(format!("{:.1}", mp));
+            }
+        }
+
+        // Resolution DPI from XResolution
+        if let Some(xres) = meta.exif_x_resolution {
+            meta.resolution_dpi = Some(format!("{} x {}", xres, meta.exif_y_resolution.unwrap_or(xres)));
+        }
+
+        // ── Legacy 174 Parity: Camera / Lens ────────────────────────────
+        map_str!(camera_make, "Make");
+        map_str!(camera_model, "Model");
+        map_str!(camera_serial, "SerialNumber");
+        map_str!(lens_model, "LensModel");
+        map_str!(lens_make, "LensMake");
+        map_str!(lens_serial, "LensSerialNumber");
+        map_str!(lens_focal_length, "FocalLength");
+        map_str!(lens_max_aperture, "MaxApertureValue");
+        map_str!(iso, "ISO");
+        map_str!(exposure_time, "ExposureTime");
+        map_str!(f_stop, "FNumber");
+        map_str!(exposure_program, "ExposureProgram");
+        map_str!(exposure_mode, "ExposureMode");
+        map_str!(exposure_compensation, "ExposureCompensation");
+        map_str!(metering_mode, "MeteringMode");
+        map_str!(flash, "Flash");
+        map_str!(flash_mode, "FlashMode");
+        map_str!(white_balance, "WhiteBalance");
+        map_str!(focus_mode, "FocusMode");
+        map_str!(focus_distance, "FocusDistance");
+        map_str!(scene_type, "SceneType");
+        map_str!(shutter_count, "ShutterCount");
+        map_str!(digital_zoom_ratio, "DigitalZoomRatio");
+
+        // ── Legacy 174 Parity: GPS / Location ───────────────────────────
+        map_str!(gps_latitude_ref, "GPSLatitudeRef");
+        map_str!(gps_longitude_ref, "GPSLongitudeRef");
+        map_str!(gps_date, "GPSDateStamp");
+        map_str!(gps_map_datum, "GPSMapDatum");
+        map_str!(gps_coordinates_dms, "GPSPosition");
+
+        // ── Legacy 174 Parity: Video ────────────────────────────────────
+        map_str!(video_bitrate, "VideoBitrate");
+        map_str!(video_duration, "Duration");
+        map_str!(aspect_ratio, "DisplayAspectRatio");
+        map_str!(rotation, "Rotation");
+        map_str!(audio_codec_video, "AudioCodec");
+        map_str!(audio_channels_video, "AudioChannels");
+        map_str!(audio_sample_rate_video, "AudioSampleRate");
+        map_str!(audio_bitrate_video, "AudioBitrate");
+        map_str!(total_bitrate, "AvgBitrate");
+        map_str!(container_format, "FileType");
+        map_str!(encoder, "Encoder");
+        map_str!(video_creation_date, "MediaCreateDate");
+        map_str!(video_track_count, "VideoStreamCount");
+        map_str!(subtitle_track_count, "SubtitleTrackCount");
+        map_str!(chapter_count, "ChapterCount");
+
+        // ── Legacy 174 Parity: Audio ────────────────────────────────────
+        map_str!(audio_title, "Title");
+        map_str!(audio_artist, "Artist");
+        map_str!(audio_album, "Album");
+        map_str!(audio_album_artist, "AlbumArtist");
+        map_str!(audio_genre, "Genre");
+        map_str!(audio_year, "ContentCreateDate");
+        map_str!(audio_track_number, "TrackNumber");
+        map_str!(audio_disc_number, "DiscNumber");
+        map_str!(audio_composer, "Composer");
+        map_str!(audio_duration, "Duration");
+        map_str!(audio_bitrate, "AudioBitrate");
+        map_str!(audio_bit_depth, "AudioBitsPerSample");
+        map_str!(audio_bpm, "BeatsPerMinute");
+        map_str!(audio_comment, "Comment");
+        map_str!(audio_lyrics, "Lyrics");
+        map_str!(audio_publisher_label, "Publisher");
+        map_str!(audio_encoder, "EncodedBy");
+        map_str!(has_album_art, "PictureLength");
+        map_str!(album_art_size, "PictureMIMEType");
+        map_str!(audio_replaygain, "ReplayGain");
+
+        // ── Legacy 174 Parity: Documents ────────────────────────────────
+        map_str!(document_title, "Title");
+        map_str!(document_author, "Author");
+        map_str!(document_subject, "Subject");
+        map_str!(document_keywords, "Keywords");
+        map_str!(document_creator_app, "Creator");
+        map_str!(document_producer, "Producer");
+        map_str!(document_creation_date, "CreateDate");
+        map_str!(document_modification_date, "ModifyDate");
+        map_str!(document_page_count, "Pages");
+        map_str!(document_word_count, "Words");
+        map_str!(document_character_count, "Characters");
+        map_str!(document_line_count, "Lines");
+        map_str!(document_paragraph_count, "Paragraphs");
+        map_str!(document_slide_count, "Slides");
+        map_str!(document_sheet_count, "Sheets");
+        map_str!(document_revision, "RevisionNumber");
+        map_str!(document_last_author, "LastModifiedBy");
+        map_str!(document_company, "Company");
+        map_str!(document_manager, "Manager");
+        map_str!(document_category, "Category");
+        map_str!(document_language, "Language");
+        map_str!(document_template, "Template");
+        map_str!(document_comments, "Comment");
+
+        // ── Legacy 174 Parity: PDF Specific (from ExifTool) ─────────────
+        map_str!(pdf_creator, "Creator");
+        map_str!(pdf_linearized, "Linearized");
+        map_str!(pdf_tagged, "Tagged");
+
         errors
     }
 

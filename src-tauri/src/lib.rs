@@ -86,12 +86,16 @@ pub fn build_router(app_state: AppState) -> Router {
 ///
 /// This is `pub` so the Tauri wrapper can `tokio::spawn` it as a background task.
 pub async fn run_axum_server() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    // Locate exiftool.exe next to this executable or on PATH
-    let exiftool_path = std::env::current_exe()
-        .ok()
-        .and_then(|p| p.parent().map(|d| d.join("exiftool.exe")))
-        .filter(|p| p.exists())
-        .unwrap_or_else(|| PathBuf::from("exiftool.exe"));
+    // Safe persistent extraction: resolve %LOCALAPPDATA%\NexGen\bin and unpack embedded suite if needed
+    let exiftool_path = exiftool_pool::ensure_exiftool_provisioned()
+        .unwrap_or_else(|e| {
+            tracing::warn!("Embedded safe extraction warning: {}. Checking executable dir/PATH.", e);
+            std::env::current_exe()
+                .ok()
+                .and_then(|p| p.parent().map(|d| d.join("exiftool.exe")))
+                .filter(|p| p.exists())
+                .unwrap_or_else(|| PathBuf::from("exiftool.exe"))
+        });
 
     let exiftool_pool = ExiftoolPool::new(exiftool_path)
         .expect("Failed to initialize ExifTool worker daemon pool");

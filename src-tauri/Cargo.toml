@@ -83,6 +83,11 @@ base64         = "0.22"
 jsonwebtoken   = "9"
 aes-gcm        = "0.10"
 
+# Embedded ExifTool Extraction & Safe Directory Provisioning
+zip            = { version = "2", default-features = false, features = ["deflate"] }
+directories    = "5"
+dirs           = "7"
+
 chrono         = { version = "0.4", features = ["serde"] }
 tracing        = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }

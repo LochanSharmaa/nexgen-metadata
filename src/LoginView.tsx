@@ -76,13 +76,15 @@ export const LoginView: React.FC<LoginViewProps> = ({ onAuthenticated }) => {
               Cryptographic License Key
             </label>
             <div className="relative">
-              <input
-                type="text"
+              <textarea
+                rows={3}
                 value={licenseKey}
                 onChange={(e) => setLicenseKey(e.target.value)}
-                placeholder="NEXGEN-XXXX-XXXX-XXXX"
+                placeholder="Paste full NEXGEN-eyJ... key"
                 disabled={loading}
-                className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-xs font-mono text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-[#a855f7] focus:border-transparent transition-all shadow-inner"
+                spellCheck={false}
+                autoComplete="off"
+                className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-xs font-mono text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-[#a855f7] focus:border-transparent transition-all shadow-inner resize-none break-all"
               />
             </div>
             <p className="mt-2 text-[10px] text-gray-500 leading-relaxed">

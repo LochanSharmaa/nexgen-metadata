@@ -1,0 +1,1285 @@
+{
+  "total_fields": 174,
+  "categories": {
+    "File System": {
+      "icon": "folder",
+      "emoji": "📁",
+      "fields": [
+        "File Name",
+        "File Extension",
+        "File Path",
+        "Parent Directory",
+        "File Size (Bytes)",
+        "File Size (Human)",
+        "Creation Date",
+        "Modification Date",
+        "Access Date",
+        "MIME Type",
+        "File Permissions",
+        "Is Hidden",
+        "Is Read-Only",
+        "Is Symlink",
+        "Owner (Windows)"
+      ]
+    },
+    "Hashes & Checksums": {
+      "icon": "tag",
+      "emoji": "🔒",
+      "fields": [
+        "MD5 Hash",
+        "SHA1 Hash",
+        "SHA224 Hash",
+        "SHA256 Hash",
+        "SHA384 Hash",
+        "SHA512 Hash",
+        "SHA3-224 Hash",
+        "SHA3-256 Hash",
+        "SHA3-384 Hash",
+        "SHA3-512 Hash",
+        "BLAKE2b Hash",
+        "BLAKE2s Hash",
+        "CRC32",
+        "Adler32",
+        "xxHash64"
+      ]
+    },
+    "Image / EXIF": {
+      "icon": "photo_camera",
+      "emoji": "📷",
+      "fields": [
+        "Image Width",
+        "Image Height",
+        "Resolution (DPI)",
+        "Bit Depth",
+        "Color Space",
+        "Color Profile",
+        "Orientation",
+        "Compression",
+        "Has Alpha Channel",
+        "Megapixels",
+        "EXIF Version",
+        "Date Taken (Original)",
+        "Date Digitized",
+        "Software",
+        "Host Computer",
+        "Description / Caption",
+        "User Comment",
+        "Copyright",
+        "Artist / Author",
+        "Rating"
+      ]
+    },
+    "Camera / Lens": {
+      "icon": "camera",
+      "emoji": "📸",
+      "fields": [
+        "Camera Make",
+        "Camera Model",
+        "Camera Serial",
+        "Lens Model",
+        "Lens Make",
+        "Lens Serial",
+        "Lens Focal Length",
+        "Lens Max Aperture",
+        "ISO",
+        "Exposure Time",
+        "F-Stop",
+        "Exposure Program",
+        "Exposure Mode",
+        "Exposure Compensation",
+        "Metering Mode",
+        "Flash",
+        "Flash Mode",
+        "White Balance",
+        "Focus Mode",
+        "Focus Distance",
+        "Scene Type",
+        "Shutter Count",
+        "Digital Zoom Ratio"
+      ]
+    },
+    "GPS / Location": {
+      "icon": "location_on",
+      "emoji": "🌍",
+      "fields": [
+        "GPS Latitude",
+        "GPS Longitude",
+        "GPS Altitude",
+        "GPS Latitude Ref",
+        "GPS Longitude Ref",
+        "GPS Altitude Ref",
+        "GPS Speed",
+        "GPS Direction",
+        "GPS Timestamp",
+        "GPS Date",
+        "GPS Map Datum",
+        "GPS Coordinates (DMS)"
+      ]
+    },
+    "Video": {
+      "icon": "videocam",
+      "emoji": "🎬",
+      "fields": [
+        "Video Codec",
+        "Video Bitrate",
+        "Video Frame Rate",
+        "Video Duration",
+        "Video Width",
+        "Video Height",
+        "Aspect Ratio",
+        "Rotation",
+        "Audio Codec (Video)",
+        "Audio Channels (Video)",
+        "Audio Sample Rate (Video)",
+        "Audio Bitrate (Video)",
+        "Total Bitrate",
+        "Container Format",
+        "Encoder",
+        "Video Creation Date",
+        "Video Track Count",
+        "Subtitle Track Count",
+        "Chapter Count"
+      ]
+    },
+    "Audio": {
+      "icon": "music_note",
+      "emoji": "🎵",
+      "fields": [
+        "Audio Title",
+        "Audio Artist",
+        "Audio Album",
+        "Audio Album Artist",
+        "Audio Genre",
+        "Audio Year",
+        "Audio Track Number",
+        "Audio Disc Number",
+        "Audio Composer",
+        "Audio Duration",
+        "Audio Bitrate",
+        "Audio Sample Rate",
+        "Audio Channels",
+        "Audio Codec",
+        "Audio Bit Depth",
+        "Audio BPM",
+        "Audio Comment",
+        "Audio Lyrics",
+        "Audio Publisher / Label",
+        "Audio Encoder",
+        "Has Album Art",
+        "Album Art Size",
+        "Audio ReplayGain"
+      ]
+    },
+    "Documents": {
+      "icon": "description",
+      "emoji": "📄",
+      "fields": [
+        "Document Title",
+        "Document Author",
+        "Document Subject",
+        "Document Keywords",
+        "Document Creator App",
+        "Document Producer",
+        "Document Creation Date",
+        "Document Modification Date",
+        "Document Page Count",
+        "Document Word Count",
+        "Document Character Count",
+        "Document Line Count",
+        "Document Paragraph Count",
+        "Document Slide Count",
+        "Document Sheet Count",
+        "Document Revision",
+        "Document Last Author",
+        "Document Company",
+        "Document Manager",
+        "Document Category",
+        "Document Language",
+        "Document Template",
+        "Document Comments"
+      ]
+    },
+    "PDF Specific": {
+      "icon": "picture_as_pdf",
+      "emoji": "📑",
+      "fields": [
+        "PDF Version",
+        "PDF Encrypted",
+        "PDF Has Forms",
+        "PDF Has Annotations",
+        "PDF Has Embedded Files",
+        "PDF Has Signatures",
+        "PDF Page Size",
+        "PDF Producer",
+        "PDF Creator",
+        "PDF Linearized",
+        "PDF Tagged"
+      ]
+    },
+    "Forensics / PE": {
+      "icon": "shield",
+      "emoji": "🔐",
+      "fields": [
+        "File Entropy",
+        "Magic Bytes (Header)",
+        "PE Architecture",
+        "PE Compile Date",
+        "PE Import Count",
+        "PE Section Count",
+        "PE Signed",
+        "PE Original Filename",
+        "PE Product Name",
+        "PE Product Version",
+        "PE Company Name",
+        "PE File Version",
+        "PE Description"
+      ]
+    }
+  },
+  "fields": {
+    "File Name": {
+      "category": "File System",
+      "rust_field": "file_name",
+      "icon": "folder",
+      "emoji": "📁"
+    },
+    "File Extension": {
+      "category": "File System",
+      "rust_field": "file_extension",
+      "icon": "folder",
+      "emoji": "📁"
+    },
+    "File Path": {
+      "category": "File System",
+      "rust_field": "file_path",
+      "icon": "folder",
+      "emoji": "📁"
+    },
+    "Parent Directory": {
+      "category": "File System",
+      "rust_field": "parent_directory",
+      "icon": "folder",
+      "emoji": "📁"
+    },
+    "File Size (Bytes)": {
+      "category": "File System",
+      "rust_field": "file_size_bytes",
+      "icon": "folder",
+      "emoji": "📁"
+    },
+    "File Size (Human)": {
+      "category": "File System",
+      "rust_field": "file_size_human",
+      "icon": "folder",
+      "emoji": "📁"
+    },
+    "Creation Date": {
+      "category": "File System",
+      "rust_field": "creation_date",
+      "icon": "folder",
+      "emoji": "📁"
+    },
+    "Modification Date": {
+      "category": "File System",
+      "rust_field": "modification_date",
+      "icon": "folder",
+      "emoji": "📁"
+    },
+    "Access Date": {
+      "category": "File System",
+      "rust_field": "access_date",
+      "icon": "folder",
+      "emoji": "📁"
+    },
+    "MIME Type": {
+      "category": "File System",
+      "rust_field": "mime_type",
+      "icon": "folder",
+      "emoji": "📁"
+    },
+    "File Permissions": {
+      "category": "File System",
+      "rust_field": "file_permissions",
+      "icon": "folder",
+      "emoji": "📁"
+    },
+    "Is Hidden": {
+      "category": "File System",
+      "rust_field": "is_hidden",
+      "icon": "folder",
+      "emoji": "📁"
+    },
+    "Is Read-Only": {
+      "category": "File System",
+      "rust_field": "is_read_only",
+      "icon": "folder",
+      "emoji": "📁"
+    },
+    "Is Symlink": {
+      "category": "File System",
+      "rust_field": "is_symlink",
+      "icon": "folder",
+      "emoji": "📁"
+    },
+    "Owner (Windows)": {
+      "category": "File System",
+      "rust_field": "owner_windows",
+      "icon": "folder",
+      "emoji": "📁"
+    },
+    "MD5 Hash": {
+      "category": "Hashes & Checksums",
+      "rust_field": "md5_hash",
+      "icon": "tag",
+      "emoji": "🔒"
+    },
+    "SHA1 Hash": {
+      "category": "Hashes & Checksums",
+      "rust_field": "sha1_hash",
+      "icon": "tag",
+      "emoji": "🔒"
+    },
+    "SHA224 Hash": {
+      "category": "Hashes & Checksums",
+      "rust_field": "sha224_hash",
+      "icon": "tag",
+      "emoji": "🔒"
+    },
+    "SHA256 Hash": {
+      "category": "Hashes & Checksums",
+      "rust_field": "sha256_hash",
+      "icon": "tag",
+      "emoji": "🔒"
+    },
+    "SHA384 Hash": {
+      "category": "Hashes & Checksums",
+      "rust_field": "sha384_hash",
+      "icon": "tag",
+      "emoji": "🔒"
+    },
+    "SHA512 Hash": {
+      "category": "Hashes & Checksums",
+      "rust_field": "sha512_hash",
+      "icon": "tag",
+      "emoji": "🔒"
+    },
+    "SHA3-224 Hash": {
+      "category": "Hashes & Checksums",
+      "rust_field": "sha3_224_hash",
+      "icon": "tag",
+      "emoji": "🔒"
+    },
+    "SHA3-256 Hash": {
+      "category": "Hashes & Checksums",
+      "rust_field": "sha3_256_hash",
+      "icon": "tag",
+      "emoji": "🔒"
+    },
+    "SHA3-384 Hash": {
+      "category": "Hashes & Checksums",
+      "rust_field": "sha3_384_hash",
+      "icon": "tag",
+      "emoji": "🔒"
+    },
+    "SHA3-512 Hash": {
+      "category": "Hashes & Checksums",
+      "rust_field": "sha3_512_hash",
+      "icon": "tag",
+      "emoji": "🔒"
+    },
+    "BLAKE2b Hash": {
+      "category": "Hashes & Checksums",
+      "rust_field": "blake2b_hash",
+      "icon": "tag",
+      "emoji": "🔒"
+    },
+    "BLAKE2s Hash": {
+      "category": "Hashes & Checksums",
+      "rust_field": "blake2s_hash",
+      "icon": "tag",
+      "emoji": "🔒"
+    },
+    "CRC32": {
+      "category": "Hashes & Checksums",
+      "rust_field": "crc32",
+      "icon": "tag",
+      "emoji": "🔒"
+    },
+    "Adler32": {
+      "category": "Hashes & Checksums",
+      "rust_field": "adler32",
+      "icon": "tag",
+      "emoji": "🔒"
+    },
+    "xxHash64": {
+      "category": "Hashes & Checksums",
+      "rust_field": "xxhash64",
+      "icon": "tag",
+      "emoji": "🔒"
+    },
+    "Image Width": {
+      "category": "Image / EXIF",
+      "rust_field": "image_width",
+      "icon": "photo_camera",
+      "emoji": "📷"
+    },
+    "Image Height": {
+      "category": "Image / EXIF",
+      "rust_field": "image_height",
+      "icon": "photo_camera",
+      "emoji": "📷"
+    },
+    "Resolution (DPI)": {
+      "category": "Image / EXIF",
+      "rust_field": "resolution_dpi",
+      "icon": "photo_camera",
+      "emoji": "📷"
+    },
+    "Bit Depth": {
+      "category": "Image / EXIF",
+      "rust_field": "bit_depth",
+      "icon": "photo_camera",
+      "emoji": "📷"
+    },
+    "Color Space": {
+      "category": "Image / EXIF",
+      "rust_field": "color_space",
+      "icon": "photo_camera",
+      "emoji": "📷"
+    },
+    "Color Profile": {
+      "category": "Image / EXIF",
+      "rust_field": "color_profile",
+      "icon": "photo_camera",
+      "emoji": "📷"
+    },
+    "Orientation": {
+      "category": "Image / EXIF",
+      "rust_field": "orientation",
+      "icon": "photo_camera",
+      "emoji": "📷"
+    },
+    "Compression": {
+      "category": "Image / EXIF",
+      "rust_field": "compression",
+      "icon": "photo_camera",
+      "emoji": "📷"
+    },
+    "Has Alpha Channel": {
+      "category": "Image / EXIF",
+      "rust_field": "has_alpha_channel",
+      "icon": "photo_camera",
+      "emoji": "📷"
+    },
+    "Megapixels": {
+      "category": "Image / EXIF",
+      "rust_field": "megapixels",
+      "icon": "photo_camera",
+      "emoji": "📷"
+    },
+    "EXIF Version": {
+      "category": "Image / EXIF",
+      "rust_field": "exif_version",
+      "icon": "photo_camera",
+      "emoji": "📷"
+    },
+    "Date Taken (Original)": {
+      "category": "Image / EXIF",
+      "rust_field": "date_taken_original",
+      "icon": "photo_camera",
+      "emoji": "📷"
+    },
+    "Date Digitized": {
+      "category": "Image / EXIF",
+      "rust_field": "date_digitized",
+      "icon": "photo_camera",
+      "emoji": "📷"
+    },
+    "Software": {
+      "category": "Image / EXIF",
+      "rust_field": "software",
+      "icon": "photo_camera",
+      "emoji": "📷"
+    },
+    "Host Computer": {
+      "category": "Image / EXIF",
+      "rust_field": "host_computer",
+      "icon": "photo_camera",
+      "emoji": "📷"
+    },
+    "Description / Caption": {
+      "category": "Image / EXIF",
+      "rust_field": "description_caption",
+      "icon": "photo_camera",
+      "emoji": "📷"
+    },
+    "User Comment": {
+      "category": "Image / EXIF",
+      "rust_field": "user_comment",
+      "icon": "photo_camera",
+      "emoji": "📷"
+    },
+    "Copyright": {
+      "category": "Image / EXIF",
+      "rust_field": "copyright",
+      "icon": "photo_camera",
+      "emoji": "📷"
+    },
+    "Artist / Author": {
+      "category": "Image / EXIF",
+      "rust_field": "artist_author",
+      "icon": "photo_camera",
+      "emoji": "📷"
+    },
+    "Rating": {
+      "category": "Image / EXIF",
+      "rust_field": "rating",
+      "icon": "photo_camera",
+      "emoji": "📷"
+    },
+    "Camera Make": {
+      "category": "Camera / Lens",
+      "rust_field": "camera_make",
+      "icon": "camera",
+      "emoji": "📸"
+    },
+    "Camera Model": {
+      "category": "Camera / Lens",
+      "rust_field": "camera_model",
+      "icon": "camera",
+      "emoji": "📸"
+    },
+    "Camera Serial": {
+      "category": "Camera / Lens",
+      "rust_field": "camera_serial",
+      "icon": "camera",
+      "emoji": "📸"
+    },
+    "Lens Model": {
+      "category": "Camera / Lens",
+      "rust_field": "lens_model",
+      "icon": "camera",
+      "emoji": "📸"
+    },
+    "Lens Make": {
+      "category": "Camera / Lens",
+      "rust_field": "lens_make",
+      "icon": "camera",
+      "emoji": "📸"
+    },
+    "Lens Serial": {
+      "category": "Camera / Lens",
+      "rust_field": "lens_serial",
+      "icon": "camera",
+      "emoji": "📸"
+    },
+    "Lens Focal Length": {
+      "category": "Camera / Lens",
+      "rust_field": "lens_focal_length",
+      "icon": "camera",
+      "emoji": "📸"
+    },
+    "Lens Max Aperture": {
+      "category": "Camera / Lens",
+      "rust_field": "lens_max_aperture",
+      "icon": "camera",
+      "emoji": "📸"
+    },
+    "ISO": {
+      "category": "Camera / Lens",
+      "rust_field": "iso",
+      "icon": "camera",
+      "emoji": "📸"
+    },
+    "Exposure Time": {
+      "category": "Camera / Lens",
+      "rust_field": "exposure_time",
+      "icon": "camera",
+      "emoji": "📸"
+    },
+    "F-Stop": {
+      "category": "Camera / Lens",
+      "rust_field": "f_stop",
+      "icon": "camera",
+      "emoji": "📸"
+    },
+    "Exposure Program": {
+      "category": "Camera / Lens",
+      "rust_field": "exposure_program",
+      "icon": "camera",
+      "emoji": "📸"
+    },
+    "Exposure Mode": {
+      "category": "Camera / Lens",
+      "rust_field": "exposure_mode",
+      "icon": "camera",
+      "emoji": "📸"
+    },
+    "Exposure Compensation": {
+      "category": "Camera / Lens",
+      "rust_field": "exposure_compensation",
+      "icon": "camera",
+      "emoji": "📸"
+    },
+    "Metering Mode": {
+      "category": "Camera / Lens",
+      "rust_field": "metering_mode",
+      "icon": "camera",
+      "emoji": "📸"
+    },
+    "Flash": {
+      "category": "Camera / Lens",
+      "rust_field": "flash",
+      "icon": "camera",
+      "emoji": "📸"
+    },
+    "Flash Mode": {
+      "category": "Camera / Lens",
+      "rust_field": "flash_mode",
+      "icon": "camera",
+      "emoji": "📸"
+    },
+    "White Balance": {
+      "category": "Camera / Lens",
+      "rust_field": "white_balance",
+      "icon": "camera",
+      "emoji": "📸"
+    },
+    "Focus Mode": {
+      "category": "Camera / Lens",
+      "rust_field": "focus_mode",
+      "icon": "camera",
+      "emoji": "📸"
+    },
+    "Focus Distance": {
+      "category": "Camera / Lens",
+      "rust_field": "focus_distance",
+      "icon": "camera",
+      "emoji": "📸"
+    },
+    "Scene Type": {
+      "category": "Camera / Lens",
+      "rust_field": "scene_type",
+      "icon": "camera",
+      "emoji": "📸"
+    },
+    "Shutter Count": {
+      "category": "Camera / Lens",
+      "rust_field": "shutter_count",
+      "icon": "camera",
+      "emoji": "📸"
+    },
+    "Digital Zoom Ratio": {
+      "category": "Camera / Lens",
+      "rust_field": "digital_zoom_ratio",
+      "icon": "camera",
+      "emoji": "📸"
+    },
+    "GPS Latitude": {
+      "category": "GPS / Location",
+      "rust_field": "gps_latitude",
+      "icon": "location_on",
+      "emoji": "🌍"
+    },
+    "GPS Longitude": {
+      "category": "GPS / Location",
+      "rust_field": "gps_longitude",
+      "icon": "location_on",
+      "emoji": "🌍"
+    },
+    "GPS Altitude": {
+      "category": "GPS / Location",
+      "rust_field": "gps_altitude",
+      "icon": "location_on",
+      "emoji": "🌍"
+    },
+    "GPS Latitude Ref": {
+      "category": "GPS / Location",
+      "rust_field": "gps_latitude_ref",
+      "icon": "location_on",
+      "emoji": "🌍"
+    },
+    "GPS Longitude Ref": {
+      "category": "GPS / Location",
+      "rust_field": "gps_longitude_ref",
+      "icon": "location_on",
+      "emoji": "🌍"
+    },
+    "GPS Altitude Ref": {
+      "category": "GPS / Location",
+      "rust_field": "gps_altitude_ref",
+      "icon": "location_on",
+      "emoji": "🌍"
+    },
+    "GPS Speed": {
+      "category": "GPS / Location",
+      "rust_field": "gps_speed",
+      "icon": "location_on",
+      "emoji": "🌍"
+    },
+    "GPS Direction": {
+      "category": "GPS / Location",
+      "rust_field": "gps_direction",
+      "icon": "location_on",
+      "emoji": "🌍"
+    },
+    "GPS Timestamp": {
+      "category": "GPS / Location",
+      "rust_field": "gps_timestamp",
+      "icon": "location_on",
+      "emoji": "🌍"
+    },
+    "GPS Date": {
+      "category": "GPS / Location",
+      "rust_field": "gps_date",
+      "icon": "location_on",
+      "emoji": "🌍"
+    },
+    "GPS Map Datum": {
+      "category": "GPS / Location",
+      "rust_field": "gps_map_datum",
+      "icon": "location_on",
+      "emoji": "🌍"
+    },
+    "GPS Coordinates (DMS)": {
+      "category": "GPS / Location",
+      "rust_field": "gps_coordinates_dms",
+      "icon": "location_on",
+      "emoji": "🌍"
+    },
+    "Video Codec": {
+      "category": "Video",
+      "rust_field": "video_codec",
+      "icon": "videocam",
+      "emoji": "🎬"
+    },
+    "Video Bitrate": {
+      "category": "Video",
+      "rust_field": "video_bitrate",
+      "icon": "videocam",
+      "emoji": "🎬"
+    },
+    "Video Frame Rate": {
+      "category": "Video",
+      "rust_field": "video_frame_rate",
+      "icon": "videocam",
+      "emoji": "🎬"
+    },
+    "Video Duration": {
+      "category": "Video",
+      "rust_field": "video_duration",
+      "icon": "videocam",
+      "emoji": "🎬"
+    },
+    "Video Width": {
+      "category": "Video",
+      "rust_field": "video_width",
+      "icon": "videocam",
+      "emoji": "🎬"
+    },
+    "Video Height": {
+      "category": "Video",
+      "rust_field": "video_height",
+      "icon": "videocam",
+      "emoji": "🎬"
+    },
+    "Aspect Ratio": {
+      "category": "Video",
+      "rust_field": "aspect_ratio",
+      "icon": "videocam",
+      "emoji": "🎬"
+    },
+    "Rotation": {
+      "category": "Video",
+      "rust_field": "rotation",
+      "icon": "videocam",
+      "emoji": "🎬"
+    },
+    "Audio Codec (Video)": {
+      "category": "Video",
+      "rust_field": "audio_codec_video",
+      "icon": "videocam",
+      "emoji": "🎬"
+    },
+    "Audio Channels (Video)": {
+      "category": "Video",
+      "rust_field": "audio_channels_video",
+      "icon": "videocam",
+      "emoji": "🎬"
+    },
+    "Audio Sample Rate (Video)": {
+      "category": "Video",
+      "rust_field": "audio_sample_rate_video",
+      "icon": "videocam",
+      "emoji": "🎬"
+    },
+    "Audio Bitrate (Video)": {
+      "category": "Video",
+      "rust_field": "audio_bitrate_video",
+      "icon": "videocam",
+      "emoji": "🎬"
+    },
+    "Total Bitrate": {
+      "category": "Video",
+      "rust_field": "total_bitrate",
+      "icon": "videocam",
+      "emoji": "🎬"
+    },
+    "Container Format": {
+      "category": "Video",
+      "rust_field": "container_format",
+      "icon": "videocam",
+      "emoji": "🎬"
+    },
+    "Encoder": {
+      "category": "Video",
+      "rust_field": "encoder",
+      "icon": "videocam",
+      "emoji": "🎬"
+    },
+    "Video Creation Date": {
+      "category": "Video",
+      "rust_field": "video_creation_date",
+      "icon": "videocam",
+      "emoji": "🎬"
+    },
+    "Video Track Count": {
+      "category": "Video",
+      "rust_field": "video_track_count",
+      "icon": "videocam",
+      "emoji": "🎬"
+    },
+    "Subtitle Track Count": {
+      "category": "Video",
+      "rust_field": "subtitle_track_count",
+      "icon": "videocam",
+      "emoji": "🎬"
+    },
+    "Chapter Count": {
+      "category": "Video",
+      "rust_field": "chapter_count",
+      "icon": "videocam",
+      "emoji": "🎬"
+    },
+    "Audio Title": {
+      "category": "Audio",
+      "rust_field": "audio_title",
+      "icon": "music_note",
+      "emoji": "🎵"
+    },
+    "Audio Artist": {
+      "category": "Audio",
+      "rust_field": "audio_artist",
+      "icon": "music_note",
+      "emoji": "🎵"
+    },
+    "Audio Album": {
+      "category": "Audio",
+      "rust_field": "audio_album",
+      "icon": "music_note",
+      "emoji": "🎵"
+    },
+    "Audio Album Artist": {
+      "category": "Audio",
+      "rust_field": "audio_album_artist",
+      "icon": "music_note",
+      "emoji": "🎵"
+    },
+    "Audio Genre": {
+      "category": "Audio",
+      "rust_field": "audio_genre",
+      "icon": "music_note",
+      "emoji": "🎵"
+    },
+    "Audio Year": {
+      "category": "Audio",
+      "rust_field": "audio_year",
+      "icon": "music_note",
+      "emoji": "🎵"
+    },
+    "Audio Track Number": {
+      "category": "Audio",
+      "rust_field": "audio_track_number",
+      "icon": "music_note",
+      "emoji": "🎵"
+    },
+    "Audio Disc Number": {
+      "category": "Audio",
+      "rust_field": "audio_disc_number",
+      "icon": "music_note",
+      "emoji": "🎵"
+    },
+    "Audio Composer": {
+      "category": "Audio",
+      "rust_field": "audio_composer",
+      "icon": "music_note",
+      "emoji": "🎵"
+    },
+    "Audio Duration": {
+      "category": "Audio",
+      "rust_field": "audio_duration",
+      "icon": "music_note",
+      "emoji": "🎵"
+    },
+    "Audio Bitrate": {
+      "category": "Audio",
+      "rust_field": "audio_bitrate",
+      "icon": "music_note",
+      "emoji": "🎵"
+    },
+    "Audio Sample Rate": {
+      "category": "Audio",
+      "rust_field": "audio_sample_rate",
+      "icon": "music_note",
+      "emoji": "🎵"
+    },
+    "Audio Channels": {
+      "category": "Audio",
+      "rust_field": "audio_channels",
+      "icon": "music_note",
+      "emoji": "🎵"
+    },
+    "Audio Codec": {
+      "category": "Audio",
+      "rust_field": "audio_codec",
+      "icon": "music_note",
+      "emoji": "🎵"
+    },
+    "Audio Bit Depth": {
+      "category": "Audio",
+      "rust_field": "audio_bit_depth",
+      "icon": "music_note",
+      "emoji": "🎵"
+    },
+    "Audio BPM": {
+      "category": "Audio",
+      "rust_field": "audio_bpm",
+      "icon": "music_note",
+      "emoji": "🎵"
+    },
+    "Audio Comment": {
+      "category": "Audio",
+      "rust_field": "audio_comment",
+      "icon": "music_note",
+      "emoji": "🎵"
+    },
+    "Audio Lyrics": {
+      "category": "Audio",
+      "rust_field": "audio_lyrics",
+      "icon": "music_note",
+      "emoji": "🎵"
+    },
+    "Audio Publisher / Label": {
+      "category": "Audio",
+      "rust_field": "audio_publisher_label",
+      "icon": "music_note",
+      "emoji": "🎵"
+    },
+    "Audio Encoder": {
+      "category": "Audio",
+      "rust_field": "audio_encoder",
+      "icon": "music_note",
+      "emoji": "🎵"
+    },
+    "Has Album Art": {
+      "category": "Audio",
+      "rust_field": "has_album_art",
+      "icon": "music_note",
+      "emoji": "🎵"
+    },
+    "Album Art Size": {
+      "category": "Audio",
+      "rust_field": "album_art_size",
+      "icon": "music_note",
+      "emoji": "🎵"
+    },
+    "Audio ReplayGain": {
+      "category": "Audio",
+      "rust_field": "audio_replaygain",
+      "icon": "music_note",
+      "emoji": "🎵"
+    },
+    "Document Title": {
+      "category": "Documents",
+      "rust_field": "document_title",
+      "icon": "description",
+      "emoji": "📄"
+    },
+    "Document Author": {
+      "category": "Documents",
+      "rust_field": "document_author",
+      "icon": "description",
+      "emoji": "📄"
+    },
+    "Document Subject": {
+      "category": "Documents",
+      "rust_field": "document_subject",
+      "icon": "description",
+      "emoji": "📄"
+    },
+    "Document Keywords": {
+      "category": "Documents",
+      "rust_field": "document_keywords",
+      "icon": "description",
+      "emoji": "📄"
+    },
+    "Document Creator App": {
+      "category": "Documents",
+      "rust_field": "document_creator_app",
+      "icon": "description",
+      "emoji": "📄"
+    },
+    "Document Producer": {
+      "category": "Documents",
+      "rust_field": "document_producer",
+      "icon": "description",
+      "emoji": "📄"
+    },
+    "Document Creation Date": {
+      "category": "Documents",
+      "rust_field": "document_creation_date",
+      "icon": "description",
+      "emoji": "📄"
+    },
+    "Document Modification Date": {
+      "category": "Documents",
+      "rust_field": "document_modification_date",
+      "icon": "description",
+      "emoji": "📄"
+    },
+    "Document Page Count": {
+      "category": "Documents",
+      "rust_field": "document_page_count",
+      "icon": "description",
+      "emoji": "📄"
+    },
+    "Document Word Count": {
+      "category": "Documents",
+      "rust_field": "document_word_count",
+      "icon": "description",
+      "emoji": "📄"
+    },
+    "Document Character Count": {
+      "category": "Documents",
+      "rust_field": "document_character_count",
+      "icon": "description",
+      "emoji": "📄"
+    },
+    "Document Line Count": {
+      "category": "Documents",
+      "rust_field": "document_line_count",
+      "icon": "description",
+      "emoji": "📄"
+    },
+    "Document Paragraph Count": {
+      "category": "Documents",
+      "rust_field": "document_paragraph_count",
+      "icon": "description",
+      "emoji": "📄"
+    },
+    "Document Slide Count": {
+      "category": "Documents",
+      "rust_field": "document_slide_count",
+      "icon": "description",
+      "emoji": "📄"
+    },
+    "Document Sheet Count": {
+      "category": "Documents",
+      "rust_field": "document_sheet_count",
+      "icon": "description",
+      "emoji": "📄"
+    },
+    "Document Revision": {
+      "category": "Documents",
+      "rust_field": "document_revision",
+      "icon": "description",
+      "emoji": "📄"
+    },
+    "Document Last Author": {
+      "category": "Documents",
+      "rust_field": "document_last_author",
+      "icon": "description",
+      "emoji": "📄"
+    },
+    "Document Company": {
+      "category": "Documents",
+      "rust_field": "document_company",
+      "icon": "description",
+      "emoji": "📄"
+    },
+    "Document Manager": {
+      "category": "Documents",
+      "rust_field": "document_manager",
+      "icon": "description",
+      "emoji": "📄"
+    },
+    "Document Category": {
+      "category": "Documents",
+      "rust_field": "document_category",
+      "icon": "description",
+      "emoji": "📄"
+    },
+    "Document Language": {
+      "category": "Documents",
+      "rust_field": "document_language",
+      "icon": "description",
+      "emoji": "📄"
+    },
+    "Document Template": {
+      "category": "Documents",
+      "rust_field": "document_template",
+      "icon": "description",
+      "emoji": "📄"
+    },
+    "Document Comments": {
+      "category": "Documents",
+      "rust_field": "document_comments",
+      "icon": "description",
+      "emoji": "📄"
+    },
+    "PDF Version": {
+      "category": "PDF Specific",
+      "rust_field": "pdf_version",
+      "icon": "picture_as_pdf",
+      "emoji": "📑"
+    },
+    "PDF Encrypted": {
+      "category": "PDF Specific",
+      "rust_field": "pdf_encrypted",
+      "icon": "picture_as_pdf",
+      "emoji": "📑"
+    },
+    "PDF Has Forms": {
+      "category": "PDF Specific",
+      "rust_field": "pdf_has_forms",
+      "icon": "picture_as_pdf",
+      "emoji": "📑"
+    },
+    "PDF Has Annotations": {
+      "category": "PDF Specific",
+      "rust_field": "pdf_has_annotations",
+      "icon": "picture_as_pdf",
+      "emoji": "📑"
+    },
+    "PDF Has Embedded Files": {
+      "category": "PDF Specific",
+      "rust_field": "pdf_has_embedded_files",
+      "icon": "picture_as_pdf",
+      "emoji": "📑"
+    },
+    "PDF Has Signatures": {
+      "category": "PDF Specific",
+      "rust_field": "pdf_has_signatures",
+      "icon": "picture_as_pdf",
+      "emoji": "📑"
+    },
+    "PDF Page Size": {
+      "category": "PDF Specific",
+      "rust_field": "pdf_page_size",
+      "icon": "picture_as_pdf",
+      "emoji": "📑"
+    },
+    "PDF Producer": {
+      "category": "PDF Specific",
+      "rust_field": "pdf_producer",
+      "icon": "picture_as_pdf",
+      "emoji": "📑"
+    },
+    "PDF Creator": {
+      "category": "PDF Specific",
+      "rust_field": "pdf_creator",
+      "icon": "picture_as_pdf",
+      "emoji": "📑"
+    },
+    "PDF Linearized": {
+      "category": "PDF Specific",
+      "rust_field": "pdf_linearized",
+      "icon": "picture_as_pdf",
+      "emoji": "📑"
+    },
+    "PDF Tagged": {
+      "category": "PDF Specific",
+      "rust_field": "pdf_tagged",
+      "icon": "picture_as_pdf",
+      "emoji": "📑"
+    },
+    "File Entropy": {
+      "category": "Forensics / PE",
+      "rust_field": "file_entropy",
+      "icon": "shield",
+      "emoji": "🔐"
+    },
+    "Magic Bytes (Header)": {
+      "category": "Forensics / PE",
+      "rust_field": "magic_bytes_header",
+      "icon": "shield",
+      "emoji": "🔐"
+    },
+    "PE Architecture": {
+      "category": "Forensics / PE",
+      "rust_field": "pe_architecture",
+      "icon": "shield",
+      "emoji": "🔐"
+    },
+    "PE Compile Date": {
+      "category": "Forensics / PE",
+      "rust_field": "pe_compile_date",
+      "icon": "shield",
+      "emoji": "🔐"
+    },
+    "PE Import Count": {
+      "category": "Forensics / PE",
+      "rust_field": "pe_import_count",
+      "icon": "shield",
+      "emoji": "🔐"
+    },
+    "PE Section Count": {
+      "category": "Forensics / PE",
+      "rust_field": "pe_section_count",
+      "icon": "shield",
+      "emoji": "🔐"
+    },
+    "PE Signed": {
+      "category": "Forensics / PE",
+      "rust_field": "pe_signed",
+      "icon": "shield",
+      "emoji": "🔐"
+    },
+    "PE Original Filename": {
+      "category": "Forensics / PE",
+      "rust_field": "pe_original_filename",
+      "icon": "shield",
+      "emoji": "🔐"
+    },
+    "PE Product Name": {
+      "category": "Forensics / PE",
+      "rust_field": "pe_product_name",
+      "icon": "shield",
+      "emoji": "🔐"
+    },
+    "PE Product Version": {
+      "category": "Forensics / PE",
+      "rust_field": "pe_product_version",
+      "icon": "shield",
+      "emoji": "🔐"
+    },
+    "PE Company Name": {
+      "category": "Forensics / PE",
+      "rust_field": "pe_company_name",
+      "icon": "shield",
+      "emoji": "🔐"
+    },
+    "PE File Version": {
+      "category": "Forensics / PE",
+      "rust_field": "pe_file_version",
+      "icon": "shield",
+      "emoji": "🔐"
+    },
+    "PE Description": {
+      "category": "Forensics / PE",
+      "rust_field": "pe_description",
+      "icon": "shield",
+      "emoji": "🔐"
+    }
+  }
+}

@@ -325,11 +325,11 @@ pub struct FileMetadata {
     /// Raw `TimeDateStamp` as a Unix epoch `u32`.
     pub pe_compile_timestamp_raw: Option<u32>,
     /// Number of section headers in the PE (`IMAGE_FILE_HEADER.NumberOfSections`).
-    pub pe_section_count: Option<u16>,
+    pub pe_section_count: Option<String>,
     /// Number of imported functions across all import descriptor entries.
-    pub pe_import_count: Option<usize>,
+    pub pe_import_count: Option<String>,
     /// Number of entries in the export directory.
-    pub pe_export_count: Option<usize>,
+    pub pe_export_count: Option<String>,
     /// Subsystem string, e.g. `"Windows GUI"`, `"Windows CUI"`, `"EFI"`.
     pub pe_subsystem: Option<String>,
     /// Whether `IMAGE_FILE_DLL` characteristic flag is set.
@@ -462,6 +462,301 @@ pub struct FileMetadata {
     pub custom_tags: Option<HashMap<String, String>>,
     /// SHA-256 hash of a canonical JSON serialisation of this record, used to
     /// detect accidental or malicious post-scan tampering of the database.
+    // ── 174 Legacy Parity Fields ──────────────────────────────────────────
+    /// Legacy 174 Parity: File Size (Bytes) (File System)
+    pub file_size_bytes: Option<String>,
+    /// Legacy 174 Parity: File Size (Human) (File System)
+    pub file_size_human: Option<String>,
+    /// Legacy 174 Parity: Creation Date (File System)
+    pub creation_date: Option<String>,
+    /// Legacy 174 Parity: Modification Date (File System)
+    pub modification_date: Option<String>,
+    /// Legacy 174 Parity: Access Date (File System)
+    pub access_date: Option<String>,
+    /// Legacy 174 Parity: MIME Type (File System)
+    pub mime_type: Option<String>,
+    /// Legacy 174 Parity: File Permissions (File System)
+    pub file_permissions: Option<String>,
+    /// Legacy 174 Parity: Is Read-Only (File System)
+    pub is_read_only: Option<String>,
+    /// Legacy 174 Parity: Is Symlink (File System)
+    pub is_symlink: Option<String>,
+    /// Legacy 174 Parity: Owner (Windows) (File System)
+    pub owner_windows: Option<String>,
+    /// Legacy 174 Parity: MD5 Hash (Hashes & Checksums)
+    pub md5_hash: Option<String>,
+    /// Legacy 174 Parity: SHA1 Hash (Hashes & Checksums)
+    pub sha1_hash: Option<String>,
+    /// Legacy 174 Parity: SHA224 Hash (Hashes & Checksums)
+    pub sha224_hash: Option<String>,
+    /// Legacy 174 Parity: SHA256 Hash (Hashes & Checksums)
+    pub sha256_hash: Option<String>,
+    /// Legacy 174 Parity: SHA384 Hash (Hashes & Checksums)
+    pub sha384_hash: Option<String>,
+    /// Legacy 174 Parity: SHA512 Hash (Hashes & Checksums)
+    pub sha512_hash: Option<String>,
+    /// Legacy 174 Parity: SHA3-224 Hash (Hashes & Checksums)
+    pub sha3_224_hash: Option<String>,
+    /// Legacy 174 Parity: SHA3-256 Hash (Hashes & Checksums)
+    pub sha3_256_hash: Option<String>,
+    /// Legacy 174 Parity: SHA3-384 Hash (Hashes & Checksums)
+    pub sha3_384_hash: Option<String>,
+    /// Legacy 174 Parity: SHA3-512 Hash (Hashes & Checksums)
+    pub sha3_512_hash: Option<String>,
+    /// Legacy 174 Parity: BLAKE2b Hash (Hashes & Checksums)
+    pub blake2b_hash: Option<String>,
+    /// Legacy 174 Parity: BLAKE2s Hash (Hashes & Checksums)
+    pub blake2s_hash: Option<String>,
+    /// Legacy 174 Parity: CRC32 (Hashes & Checksums)
+    pub crc32: Option<String>,
+    /// Legacy 174 Parity: Adler32 (Hashes & Checksums)
+    pub adler32: Option<String>,
+    /// Legacy 174 Parity: xxHash64 (Hashes & Checksums)
+    pub xxhash64: Option<String>,
+    /// Legacy 174 Parity: Image Width (Image / EXIF)
+    pub image_width: Option<String>,
+    /// Legacy 174 Parity: Image Height (Image / EXIF)
+    pub image_height: Option<String>,
+    /// Legacy 174 Parity: Resolution (DPI) (Image / EXIF)
+    pub resolution_dpi: Option<String>,
+    /// Legacy 174 Parity: Bit Depth (Image / EXIF)
+    pub bit_depth: Option<String>,
+    /// Legacy 174 Parity: Color Space (Image / EXIF)
+    pub color_space: Option<String>,
+    /// Legacy 174 Parity: Color Profile (Image / EXIF)
+    pub color_profile: Option<String>,
+    /// Legacy 174 Parity: Orientation (Image / EXIF)
+    pub orientation: Option<String>,
+    /// Legacy 174 Parity: Compression (Image / EXIF)
+    pub compression: Option<String>,
+    /// Legacy 174 Parity: Has Alpha Channel (Image / EXIF)
+    pub has_alpha_channel: Option<String>,
+    /// Legacy 174 Parity: Megapixels (Image / EXIF)
+    pub megapixels: Option<String>,
+    /// Legacy 174 Parity: EXIF Version (Image / EXIF)
+    pub exif_version: Option<String>,
+    /// Legacy 174 Parity: Date Taken (Original) (Image / EXIF)
+    pub date_taken_original: Option<String>,
+    /// Legacy 174 Parity: Date Digitized (Image / EXIF)
+    pub date_digitized: Option<String>,
+    /// Legacy 174 Parity: Software (Image / EXIF)
+    pub software: Option<String>,
+    /// Legacy 174 Parity: Host Computer (Image / EXIF)
+    pub host_computer: Option<String>,
+    /// Legacy 174 Parity: Description / Caption (Image / EXIF)
+    pub description_caption: Option<String>,
+    /// Legacy 174 Parity: User Comment (Image / EXIF)
+    pub user_comment: Option<String>,
+    /// Legacy 174 Parity: Copyright (Image / EXIF)
+    pub copyright: Option<String>,
+    /// Legacy 174 Parity: Artist / Author (Image / EXIF)
+    pub artist_author: Option<String>,
+    /// Legacy 174 Parity: Rating (Image / EXIF)
+    pub rating: Option<String>,
+    /// Legacy 174 Parity: Camera Make (Camera / Lens)
+    pub camera_make: Option<String>,
+    /// Legacy 174 Parity: Camera Model (Camera / Lens)
+    pub camera_model: Option<String>,
+    /// Legacy 174 Parity: Camera Serial (Camera / Lens)
+    pub camera_serial: Option<String>,
+    /// Legacy 174 Parity: Lens Model (Camera / Lens)
+    pub lens_model: Option<String>,
+    /// Legacy 174 Parity: Lens Make (Camera / Lens)
+    pub lens_make: Option<String>,
+    /// Legacy 174 Parity: Lens Serial (Camera / Lens)
+    pub lens_serial: Option<String>,
+    /// Legacy 174 Parity: Lens Focal Length (Camera / Lens)
+    pub lens_focal_length: Option<String>,
+    /// Legacy 174 Parity: Lens Max Aperture (Camera / Lens)
+    pub lens_max_aperture: Option<String>,
+    /// Legacy 174 Parity: ISO (Camera / Lens)
+    pub iso: Option<String>,
+    /// Legacy 174 Parity: Exposure Time (Camera / Lens)
+    pub exposure_time: Option<String>,
+    /// Legacy 174 Parity: F-Stop (Camera / Lens)
+    pub f_stop: Option<String>,
+    /// Legacy 174 Parity: Exposure Program (Camera / Lens)
+    pub exposure_program: Option<String>,
+    /// Legacy 174 Parity: Exposure Mode (Camera / Lens)
+    pub exposure_mode: Option<String>,
+    /// Legacy 174 Parity: Exposure Compensation (Camera / Lens)
+    pub exposure_compensation: Option<String>,
+    /// Legacy 174 Parity: Metering Mode (Camera / Lens)
+    pub metering_mode: Option<String>,
+    /// Legacy 174 Parity: Flash (Camera / Lens)
+    pub flash: Option<String>,
+    /// Legacy 174 Parity: Flash Mode (Camera / Lens)
+    pub flash_mode: Option<String>,
+    /// Legacy 174 Parity: White Balance (Camera / Lens)
+    pub white_balance: Option<String>,
+    /// Legacy 174 Parity: Focus Mode (Camera / Lens)
+    pub focus_mode: Option<String>,
+    /// Legacy 174 Parity: Focus Distance (Camera / Lens)
+    pub focus_distance: Option<String>,
+    /// Legacy 174 Parity: Scene Type (Camera / Lens)
+    pub scene_type: Option<String>,
+    /// Legacy 174 Parity: Shutter Count (Camera / Lens)
+    pub shutter_count: Option<String>,
+    /// Legacy 174 Parity: Digital Zoom Ratio (Camera / Lens)
+    pub digital_zoom_ratio: Option<String>,
+    /// Legacy 174 Parity: GPS Latitude Ref (GPS / Location)
+    pub gps_latitude_ref: Option<String>,
+    /// Legacy 174 Parity: GPS Longitude Ref (GPS / Location)
+    pub gps_longitude_ref: Option<String>,
+    /// Legacy 174 Parity: GPS Date (GPS / Location)
+    pub gps_date: Option<String>,
+    /// Legacy 174 Parity: GPS Map Datum (GPS / Location)
+    pub gps_map_datum: Option<String>,
+    /// Legacy 174 Parity: GPS Coordinates (DMS) (GPS / Location)
+    pub gps_coordinates_dms: Option<String>,
+    /// Legacy 174 Parity: Video Bitrate (Video)
+    pub video_bitrate: Option<String>,
+    /// Legacy 174 Parity: Video Duration (Video)
+    pub video_duration: Option<String>,
+    /// Legacy 174 Parity: Aspect Ratio (Video)
+    pub aspect_ratio: Option<String>,
+    /// Legacy 174 Parity: Rotation (Video)
+    pub rotation: Option<String>,
+    /// Legacy 174 Parity: Audio Codec (Video) (Video)
+    pub audio_codec_video: Option<String>,
+    /// Legacy 174 Parity: Audio Channels (Video) (Video)
+    pub audio_channels_video: Option<String>,
+    /// Legacy 174 Parity: Audio Sample Rate (Video) (Video)
+    pub audio_sample_rate_video: Option<String>,
+    /// Legacy 174 Parity: Audio Bitrate (Video) (Video)
+    pub audio_bitrate_video: Option<String>,
+    /// Legacy 174 Parity: Total Bitrate (Video)
+    pub total_bitrate: Option<String>,
+    /// Legacy 174 Parity: Container Format (Video)
+    pub container_format: Option<String>,
+    /// Legacy 174 Parity: Encoder (Video)
+    pub encoder: Option<String>,
+    /// Legacy 174 Parity: Video Creation Date (Video)
+    pub video_creation_date: Option<String>,
+    /// Legacy 174 Parity: Video Track Count (Video)
+    pub video_track_count: Option<String>,
+    /// Legacy 174 Parity: Subtitle Track Count (Video)
+    pub subtitle_track_count: Option<String>,
+    /// Legacy 174 Parity: Chapter Count (Video)
+    pub chapter_count: Option<String>,
+    /// Legacy 174 Parity: Audio Title (Audio)
+    pub audio_title: Option<String>,
+    /// Legacy 174 Parity: Audio Artist (Audio)
+    pub audio_artist: Option<String>,
+    /// Legacy 174 Parity: Audio Album (Audio)
+    pub audio_album: Option<String>,
+    /// Legacy 174 Parity: Audio Album Artist (Audio)
+    pub audio_album_artist: Option<String>,
+    /// Legacy 174 Parity: Audio Genre (Audio)
+    pub audio_genre: Option<String>,
+    /// Legacy 174 Parity: Audio Year (Audio)
+    pub audio_year: Option<String>,
+    /// Legacy 174 Parity: Audio Track Number (Audio)
+    pub audio_track_number: Option<String>,
+    /// Legacy 174 Parity: Audio Disc Number (Audio)
+    pub audio_disc_number: Option<String>,
+    /// Legacy 174 Parity: Audio Composer (Audio)
+    pub audio_composer: Option<String>,
+    /// Legacy 174 Parity: Audio Duration (Audio)
+    pub audio_duration: Option<String>,
+    /// Legacy 174 Parity: Audio Bitrate (Audio)
+    pub audio_bitrate: Option<String>,
+    /// Legacy 174 Parity: Audio Bit Depth (Audio)
+    pub audio_bit_depth: Option<String>,
+    /// Legacy 174 Parity: Audio BPM (Audio)
+    pub audio_bpm: Option<String>,
+    /// Legacy 174 Parity: Audio Comment (Audio)
+    pub audio_comment: Option<String>,
+    /// Legacy 174 Parity: Audio Lyrics (Audio)
+    pub audio_lyrics: Option<String>,
+    /// Legacy 174 Parity: Audio Publisher / Label (Audio)
+    pub audio_publisher_label: Option<String>,
+    /// Legacy 174 Parity: Audio Encoder (Audio)
+    pub audio_encoder: Option<String>,
+    /// Legacy 174 Parity: Has Album Art (Audio)
+    pub has_album_art: Option<String>,
+    /// Legacy 174 Parity: Album Art Size (Audio)
+    pub album_art_size: Option<String>,
+    /// Legacy 174 Parity: Audio ReplayGain (Audio)
+    pub audio_replaygain: Option<String>,
+    /// Legacy 174 Parity: Document Title (Documents)
+    pub document_title: Option<String>,
+    /// Legacy 174 Parity: Document Author (Documents)
+    pub document_author: Option<String>,
+    /// Legacy 174 Parity: Document Subject (Documents)
+    pub document_subject: Option<String>,
+    /// Legacy 174 Parity: Document Keywords (Documents)
+    pub document_keywords: Option<String>,
+    /// Legacy 174 Parity: Document Creator App (Documents)
+    pub document_creator_app: Option<String>,
+    /// Legacy 174 Parity: Document Producer (Documents)
+    pub document_producer: Option<String>,
+    /// Legacy 174 Parity: Document Creation Date (Documents)
+    pub document_creation_date: Option<String>,
+    /// Legacy 174 Parity: Document Modification Date (Documents)
+    pub document_modification_date: Option<String>,
+    /// Legacy 174 Parity: Document Page Count (Documents)
+    pub document_page_count: Option<String>,
+    /// Legacy 174 Parity: Document Word Count (Documents)
+    pub document_word_count: Option<String>,
+    /// Legacy 174 Parity: Document Character Count (Documents)
+    pub document_character_count: Option<String>,
+    /// Legacy 174 Parity: Document Line Count (Documents)
+    pub document_line_count: Option<String>,
+    /// Legacy 174 Parity: Document Paragraph Count (Documents)
+    pub document_paragraph_count: Option<String>,
+    /// Legacy 174 Parity: Document Slide Count (Documents)
+    pub document_slide_count: Option<String>,
+    /// Legacy 174 Parity: Document Sheet Count (Documents)
+    pub document_sheet_count: Option<String>,
+    /// Legacy 174 Parity: Document Revision (Documents)
+    pub document_revision: Option<String>,
+    /// Legacy 174 Parity: Document Last Author (Documents)
+    pub document_last_author: Option<String>,
+    /// Legacy 174 Parity: Document Company (Documents)
+    pub document_company: Option<String>,
+    /// Legacy 174 Parity: Document Manager (Documents)
+    pub document_manager: Option<String>,
+    /// Legacy 174 Parity: Document Category (Documents)
+    pub document_category: Option<String>,
+    /// Legacy 174 Parity: Document Language (Documents)
+    pub document_language: Option<String>,
+    /// Legacy 174 Parity: Document Template (Documents)
+    pub document_template: Option<String>,
+    /// Legacy 174 Parity: Document Comments (Documents)
+    pub document_comments: Option<String>,
+    /// Legacy 174 Parity: PDF Encrypted (PDF Specific)
+    pub pdf_encrypted: Option<String>,
+    /// Legacy 174 Parity: PDF Has Signatures (PDF Specific)
+    pub pdf_has_signatures: Option<String>,
+    /// Legacy 174 Parity: PDF Page Size (PDF Specific)
+    pub pdf_page_size: Option<String>,
+    /// Legacy 174 Parity: PDF Creator (PDF Specific)
+    pub pdf_creator: Option<String>,
+    /// Legacy 174 Parity: PDF Linearized (PDF Specific)
+    pub pdf_linearized: Option<String>,
+    /// Legacy 174 Parity: PDF Tagged (PDF Specific)
+    pub pdf_tagged: Option<String>,
+    /// Legacy 174 Parity: File Entropy (Forensics / PE)
+    pub file_entropy: Option<String>,
+    /// Legacy 174 Parity: Magic Bytes (Header) (Forensics / PE)
+    pub magic_bytes_header: Option<String>,
+    /// Legacy 174 Parity: PE Compile Date (Forensics / PE)
+    pub pe_compile_date: Option<String>,
+    /// Legacy 174 Parity: PE Signed (Forensics / PE)
+    pub pe_signed: Option<String>,
+    /// Legacy 174 Parity: PE Original Filename (Forensics / PE)
+    pub pe_original_filename: Option<String>,
+    /// Legacy 174 Parity: PE Product Name (Forensics / PE)
+    pub pe_product_name: Option<String>,
+    /// Legacy 174 Parity: PE Product Version (Forensics / PE)
+    pub pe_product_version: Option<String>,
+    /// Legacy 174 Parity: PE Company Name (Forensics / PE)
+    pub pe_company_name: Option<String>,
+    /// Legacy 174 Parity: PE File Version (Forensics / PE)
+    pub pe_file_version: Option<String>,
+    /// Legacy 174 Parity: PE Description (Forensics / PE)
+    pub pe_description: Option<String>,
     pub row_hash: Option<String>,
 }
 
@@ -640,6 +935,154 @@ impl FileMetadata {
             file_type_category: None,
             file_type_subcategory: None,
             custom_tags: None,
+            // 174 Legacy Parity Initializers
+            file_size_bytes: None,
+            file_size_human: None,
+            creation_date: None,
+            modification_date: None,
+            access_date: None,
+            mime_type: None,
+            file_permissions: None,
+            is_read_only: None,
+            is_symlink: None,
+            owner_windows: None,
+            md5_hash: None,
+            sha1_hash: None,
+            sha224_hash: None,
+            sha256_hash: None,
+            sha384_hash: None,
+            sha512_hash: None,
+            sha3_224_hash: None,
+            sha3_256_hash: None,
+            sha3_384_hash: None,
+            sha3_512_hash: None,
+            blake2b_hash: None,
+            blake2s_hash: None,
+            crc32: None,
+            adler32: None,
+            xxhash64: None,
+            image_width: None,
+            image_height: None,
+            resolution_dpi: None,
+            bit_depth: None,
+            color_space: None,
+            color_profile: None,
+            orientation: None,
+            compression: None,
+            has_alpha_channel: None,
+            megapixels: None,
+            exif_version: None,
+            date_taken_original: None,
+            date_digitized: None,
+            software: None,
+            host_computer: None,
+            description_caption: None,
+            user_comment: None,
+            copyright: None,
+            artist_author: None,
+            rating: None,
+            camera_make: None,
+            camera_model: None,
+            camera_serial: None,
+            lens_model: None,
+            lens_make: None,
+            lens_serial: None,
+            lens_focal_length: None,
+            lens_max_aperture: None,
+            iso: None,
+            exposure_time: None,
+            f_stop: None,
+            exposure_program: None,
+            exposure_mode: None,
+            exposure_compensation: None,
+            metering_mode: None,
+            flash: None,
+            flash_mode: None,
+            white_balance: None,
+            focus_mode: None,
+            focus_distance: None,
+            scene_type: None,
+            shutter_count: None,
+            digital_zoom_ratio: None,
+            gps_latitude_ref: None,
+            gps_longitude_ref: None,
+            gps_date: None,
+            gps_map_datum: None,
+            gps_coordinates_dms: None,
+            video_bitrate: None,
+            video_duration: None,
+            aspect_ratio: None,
+            rotation: None,
+            audio_codec_video: None,
+            audio_channels_video: None,
+            audio_sample_rate_video: None,
+            audio_bitrate_video: None,
+            total_bitrate: None,
+            container_format: None,
+            encoder: None,
+            video_creation_date: None,
+            video_track_count: None,
+            subtitle_track_count: None,
+            chapter_count: None,
+            audio_title: None,
+            audio_artist: None,
+            audio_album: None,
+            audio_album_artist: None,
+            audio_genre: None,
+            audio_year: None,
+            audio_track_number: None,
+            audio_disc_number: None,
+            audio_composer: None,
+            audio_duration: None,
+            audio_bitrate: None,
+            audio_bit_depth: None,
+            audio_bpm: None,
+            audio_comment: None,
+            audio_lyrics: None,
+            audio_publisher_label: None,
+            audio_encoder: None,
+            has_album_art: None,
+            album_art_size: None,
+            audio_replaygain: None,
+            document_title: None,
+            document_author: None,
+            document_subject: None,
+            document_keywords: None,
+            document_creator_app: None,
+            document_producer: None,
+            document_creation_date: None,
+            document_modification_date: None,
+            document_page_count: None,
+            document_word_count: None,
+            document_character_count: None,
+            document_line_count: None,
+            document_paragraph_count: None,
+            document_slide_count: None,
+            document_sheet_count: None,
+            document_revision: None,
+            document_last_author: None,
+            document_company: None,
+            document_manager: None,
+            document_category: None,
+            document_language: None,
+            document_template: None,
+            document_comments: None,
+            pdf_encrypted: None,
+            pdf_has_signatures: None,
+            pdf_page_size: None,
+            pdf_creator: None,
+            pdf_linearized: None,
+            pdf_tagged: None,
+            file_entropy: None,
+            magic_bytes_header: None,
+            pe_compile_date: None,
+            pe_signed: None,
+            pe_original_filename: None,
+            pe_product_name: None,
+            pe_product_version: None,
+            pe_company_name: None,
+            pe_file_version: None,
+            pe_description: None,
             row_hash: None,
         }
     }
