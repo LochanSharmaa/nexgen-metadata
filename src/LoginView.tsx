@@ -47,24 +47,24 @@ export const LoginView: React.FC<LoginViewProps> = ({ onAuthenticated }) => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen w-screen bg-[#0d0914] text-gray-100 font-sans select-none p-4">
+    <div className="flex items-center justify-center min-h-screen w-screen bg-[#1c1917] text-amber-50 font-sans select-none p-4">
       {/* Background ambient lighting */}
-      <div className="absolute w-[500px] h-[500px] bg-[#630ed4]/20 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute w-[500px] h-[500px] bg-amber-500/15 rounded-full blur-[140px] pointer-events-none" />
 
       {/* Glassmorphism Auth Card */}
-      <div className="relative z-10 w-full max-w-md p-8 bg-white/[0.04] backdrop-blur-2xl border border-white/[0.1] rounded-2xl shadow-2xl shadow-purple-950/40">
+      <div className="relative z-10 w-full max-w-md p-8 bg-stone-900/80 backdrop-blur-2xl border border-amber-500/20 rounded-2xl shadow-2xl shadow-amber-950/40">
         {/* Header Branding */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#630ed4] to-[#a855f7] flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-purple-900/60 mb-4">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-400 to-yellow-200 flex items-center justify-center text-amber-950 font-black text-2xl shadow-lg shadow-amber-900/40 mb-4">
             NX
           </div>
-          <h1 className="text-xl font-black tracking-wider text-white">
+          <h1 className="text-xl font-black tracking-wider text-amber-100">
             NEXGEN METADATA
           </h1>
-          <p className="text-xs uppercase tracking-widest text-purple-400 font-bold mt-1">
-            Forensic Deep Inspection Suite
+          <p className="text-xs uppercase tracking-widest text-amber-300 font-bold mt-1">
+            Forensic Intelligence Suite
           </p>
-          <div className="mt-3 px-3 py-1 bg-purple-900/40 border border-purple-500/30 rounded-full text-[10px] text-purple-300 font-medium">
+          <div className="mt-3 px-3 py-1 bg-amber-950/50 border border-amber-500/30 rounded-full text-[10px] text-amber-200 font-medium">
             🔒 Offline Air-Gapped License Gate
           </div>
         </div>
@@ -72,7 +72,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onAuthenticated }) => {
         {/* Form */}
         <form onSubmit={handleActivate} className="space-y-5">
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-amber-200/80 mb-2">
               Cryptographic License Key
             </label>
             <div className="relative">
@@ -84,10 +84,10 @@ export const LoginView: React.FC<LoginViewProps> = ({ onAuthenticated }) => {
                 disabled={loading}
                 spellCheck={false}
                 autoComplete="off"
-                className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-xs font-mono text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-[#a855f7] focus:border-transparent transition-all shadow-inner resize-none break-all"
+                className="w-full px-4 py-3 bg-black/50 border border-amber-500/20 rounded-xl text-xs font-mono text-amber-100 placeholder-amber-700/50 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all shadow-inner resize-none break-all"
               />
             </div>
-            <p className="mt-2 text-[10px] text-gray-500 leading-relaxed">
+            <p className="mt-2 text-[10px] text-stone-400 leading-relaxed">
               Your license key is cryptographically signed with Ed25519. No
               internet connection or external activation server is required.
             </p>
@@ -107,8 +107,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onAuthenticated }) => {
             disabled={loading}
             className={`w-full py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wider shadow-lg transition-all ${
               loading
-                ? "bg-purple-900 text-purple-300 cursor-wait"
-                : "bg-gradient-to-r from-[#630ed4] to-[#8b5cf6] hover:from-[#5209b5] hover:to-[#7c3aed] text-white shadow-purple-900/50 hover:shadow-purple-700/60 cursor-pointer active:scale-[0.98]"
+                ? "bg-amber-900/60 text-amber-300/60 cursor-wait"
+                : "bg-gradient-to-r from-yellow-300 to-amber-300 hover:from-yellow-400 hover:to-amber-400 text-amber-950 shadow-amber-900/40 cursor-pointer active:scale-[0.98]"
             }`}
           >
             {loading ? "Validating Cryptographic Key..." : "Activate & Launch Engine"}
@@ -116,8 +116,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onAuthenticated }) => {
         </form>
 
         {/* Security Footer Notice */}
-        <div className="mt-8 pt-6 border-t border-white/[0.06] text-center">
-          <p className="text-[10px] text-gray-500">
+        <div className="mt-8 pt-6 border-t border-amber-500/10 text-center">
+          <p className="text-[10px] text-stone-400">
             NexGen Forensics LLC • Localhost Binding: 127.0.0.1:8080
           </p>
         </div>

@@ -36,6 +36,11 @@ path = "src/bin/generate_matrix.rs"
 name = "test_mapping"
 path = "src/bin/test_mapping.rs"
 
+# ── QA Automated Forensic Validator ───────────────────────────────────────────
+[[bin]]
+name = "qa_validator"
+path = "src/bin/qa_validator.rs"
+
 # ── Core forensic engine dependencies ─────────────────────────────────────────
 [dependencies]
 axum               = { version = "0.8", features = ["macros", "tokio"] }
@@ -75,6 +80,7 @@ serde_json     = "1"
 anyhow         = "1"
 thiserror      = "2"
 once_cell      = "1"
+rust-embed     = "8"
 
 # Cryptographic License Gate & Auth
 ed25519-dalek  = { version = "2", features = ["rand_core", "serde"] }

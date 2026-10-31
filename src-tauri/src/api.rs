@@ -87,6 +87,7 @@ pub fn create_api_router() -> Router<AppState> {
         .route("/api/scan/export/{scan_id}", get(handle_export_download))
         .route("/api/scan/records/{scan_id}", get(handle_get_records))
         .route("/api/report-issue", post(handle_report_issue))
+        .route("/api/dialog/folder", post(handle_select_folder))
         // Backwards-compatible routes
         .route("/api/scan", post(handle_start_scan_compat))
         .route("/api/cancel", post(handle_cancel_scan_compat))
@@ -558,4 +559,63 @@ async fn handle_export_compat(
     } else {
         Err((StatusCode::NOT_FOUND, Json(serde_json::json!({ "error": "No active scan" }))))
     }
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct SelectFolderResponse {
+    pub path: String,
+    pub files: usize,
+    pub size: String,
+}
+
+pub async fn handle_select_folder() -> Result<Json<SelectFolderResponse>, (StatusCode, Json<serde_json::Value>)> {
+    let script = r#"
+Add-Type -AssemblyName System.Windows.Forms
+$dialog = New-Object System.Windows.Forms.FolderBrowserDialog
+$dialog.Description = "Select Folder for Metadata Extraction"
+$dialog.ShowNewFolderButton = $false
+if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+    Write-Output $dialog.SelectedPath
+}
+"#;
+    let output = tokio::process::Command::new("powershell")
+        .args(["-NoProfile", "-NonInteractive", "-Command", script])
+        .output()
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({ "error": e.to_string() }))))?;
+
+    let path_str = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    if path_str.is_empty() {
+        return Err((StatusCode::BAD_REQUEST, Json(serde_json::json!({ "error": "No folder selected" }))));
+    }
+
+    let p = PathBuf::from(&path_str);
+    let mut count = 0usize;
+    let mut total_bytes = 0u64;
+    if let Ok(entries) = std::fs::read_dir(&p) {
+        for entry in entries.flatten() {
+            if let Ok(meta) = entry.metadata() {
+                if meta.is_file() {
+                    count += 1;
+                    total_bytes += meta.len();
+                }
+            }
+        }
+    }
+
+    let size_str = if total_bytes > 1_073_741_824 {
+        format!("{:.2} GB", total_bytes as f64 / 1_073_741_824.0)
+    } else if total_bytes > 1_048_576 {
+        format!("{:.1} MB", total_bytes as f64 / 1_048_576.0)
+    } else if total_bytes > 1024 {
+        format!("{:.1} KB", total_bytes as f64 / 1024.0)
+    } else {
+        format!("{} B", total_bytes)
+    };
+
+    Ok(Json(SelectFolderResponse {
+        path: path_str,
+        files: count,
+        size: size_str,
+    }))
 }

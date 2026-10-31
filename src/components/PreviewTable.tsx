@@ -1,27 +1,27 @@
 import React, { useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { FileMetadata, FIELD_DEFINITIONS } from "../types";
+import { FIELD_DEFINITIONS } from "../types";
+import { api } from "../api";
 
 interface PreviewTableProps {
-  data: FileMetadata[];
+  data: Record<string, any>[];
   columns: string[];
   isLoading: boolean;
-  scanId?: string;
 }
 
 export const PreviewTable: React.FC<PreviewTableProps> = ({
   data,
   columns,
   isLoading,
-  scanId,
 }) => {
   const parentRef = useRef<HTMLDivElement>(null);
   const [reportingRow, setReportingRow] = useState<number | null>(null);
+  const [reportSuccess, setReportSuccess] = useState<string | null>(null);
 
   const rowVirtualizer = useVirtualizer({
     count: data.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 32,
+    estimateSize: () => 36,
     overscan: 10,
   });
 
@@ -32,57 +32,43 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
 
   const handleReportIssue = async (rowIndex: number, fileName: string) => {
     setReportingRow(rowIndex);
+    setReportSuccess(null);
     try {
-      const token = localStorage.getItem("nexgen_token");
-      const res = await fetch("/api/report-issue", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({
-          scan_id: scanId || "default",
-          row_index: rowIndex,
-        }),
+      const res = await api.post("/api/report-issue", {
+        file_path: fileName,
+        issue_type: "FIELD_EXTRACTION_FAILURE",
+        description: `Manual operator audit report from preview table row #${rowIndex + 1}`,
       });
-
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
-        alert(`Failed to generate encrypted bug report: ${errJson.error || res.statusText}`);
-        return;
+      if (res.data?.success) {
+        setReportSuccess(`Logged #${rowIndex + 1}`);
+        setTimeout(() => setReportSuccess(null), 3000);
       }
-
-      // Download the encrypted .nexgenbug file
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `report_${fileName.replace(/[^a-zA-Z0-9_-]/g, "_")}_row${rowIndex + 1}.nexgenbug`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (err) {
-      console.error("Report issue failed:", err);
-      alert("Network error while creating encrypted diagnostic bug report.");
+    } catch (e) {
+      console.error("Failed to report issue", e);
     } finally {
       setReportingRow(null);
     }
   };
 
-  const renderCellValue = (row: FileMetadata, key: string) => {
-    const val = (row as unknown as Record<string, unknown>)[key];
+  const formatCellValue = (val: any) => {
     if (val === null || val === undefined || val === "") {
-      return <span className="text-gray-300 font-mono">--</span>;
+      return <span className="text-stone-300 italic">—</span>;
     }
     if (typeof val === "boolean") {
       return (
         <span
           className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
-            val ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+            val ? "bg-emerald-100 text-emerald-800" : "bg-stone-100 text-stone-500"
           }`}
         >
           {val ? "TRUE" : "FALSE"}
+        </span>
+      );
+    }
+    if (typeof val === "object") {
+      return (
+        <span className="font-mono text-[10px] text-stone-500">
+          {JSON.stringify(val)}
         </span>
       );
     }
@@ -93,37 +79,37 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full bg-white/80 backdrop-blur-md rounded-xl border border-purple-100 shadow-sm overflow-hidden">
-      <div className="px-4 py-2 border-b border-purple-100 bg-purple-50/50 flex justify-between items-center text-xs">
-        <span className="font-bold text-gray-800">
+    <div className="flex flex-col h-full bg-white/80 backdrop-blur-md rounded-xl border border-amber-200 shadow-sm overflow-hidden">
+      <div className="px-4 py-2 border-b border-amber-200/60 bg-amber-50/50 flex justify-between items-center text-xs">
+        <span className="font-bold text-stone-800">
           Live Preview ({data.length.toLocaleString()} records ingested)
         </span>
         {isLoading && (
-          <span className="text-[#630ed4] font-semibold animate-pulse">
-            Scanning files...
+          <span className="text-amber-800 font-semibold animate-pulse">
+            Extracting files...
           </span>
         )}
       </div>
 
       <div ref={parentRef} className="overflow-auto flex-1 text-xs">
         {data.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-gray-400">
-            No data yet. Select a folder and click "Start Scan" to begin.
+          <div className="flex items-center justify-center h-full text-stone-400">
+            No data yet. Select an evidence directory and click "Begin Extraction" to begin.
           </div>
         ) : (
           <table className="w-full border-collapse">
-            <thead className="sticky top-0 bg-purple-100/90 backdrop-blur border-b border-purple-200 z-10">
+            <thead className="sticky top-0 bg-amber-100/90 backdrop-blur border-b border-amber-200 z-10">
               <tr>
-                <th className="p-2 text-left text-gray-600 font-bold border-r border-purple-200 w-12">
+                <th className="p-2 text-left text-stone-600 font-bold border-r border-amber-200 w-12">
                   #
                 </th>
-                <th className="p-2 text-center text-gray-600 font-bold border-r border-purple-200 w-24">
+                <th className="p-2 text-center text-stone-600 font-bold border-r border-amber-200 w-24">
                   Audit
                 </th>
                 {columns.map((col) => (
                   <th
                     key={col}
-                    className="p-2 text-left text-gray-700 font-bold border-r border-purple-200 whitespace-nowrap"
+                    className="p-2 text-left text-stone-700 font-bold border-r border-amber-200 whitespace-nowrap"
                   >
                     {getHeaderLabel(col)}
                   </th>
@@ -137,31 +123,31 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
                 return (
                   <tr
                     key={virtualRow.index}
-                    className={`border-b border-gray-100 transition-colors ${
-                      virtualRow.index % 2 === 0 ? "bg-white" : "bg-purple-50/20"
-                    } hover:bg-purple-100/40`}
+                    className={`border-b border-stone-100 transition-colors ${
+                      virtualRow.index % 2 === 0 ? "bg-white" : "bg-amber-50/20"
+                    } hover:bg-amber-100/40`}
                     style={{ height: `${virtualRow.size}px` }}
                   >
-                    <td className="p-2 text-gray-400 font-mono text-[10px] border-r border-gray-100">
+                    <td className="p-2 text-stone-400 font-mono text-[10px] border-r border-stone-100">
                       {virtualRow.index + 1}
                     </td>
-                    <td className="p-1 text-center border-r border-gray-100">
+                    <td className="p-1 text-center border-r border-stone-100">
                       <button
                         onClick={() => handleReportIssue(virtualRow.index, row.file_name || `row_${virtualRow.index + 1}`)}
                         disabled={isReporting}
-                        title="Export encrypted AES-GCM diagnostic package (.nexgenbug) for support"
-                        className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 text-[10px] font-medium transition-colors"
+                        title="Flag anomalous extraction for cryptographic diagnostics container"
+                        className="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 transition-all cursor-pointer font-medium"
                       >
-                        <span>{isReporting ? "⏳" : "🐛"}</span>
-                        <span>{isReporting ? "Exporting" : "Report"}</span>
+                        {isReporting ? "..." : "Audit"}
                       </button>
                     </td>
                     {columns.map((col) => (
                       <td
                         key={col}
-                        className="p-2 text-gray-700 border-r border-gray-100 max-w-[200px] truncate"
+                        className="p-2 border-r border-stone-100 max-w-xs truncate font-mono text-[11px] text-stone-800"
+                        title={String(row[col] ?? "")}
                       >
-                        {renderCellValue(row, col)}
+                        {formatCellValue(row[col])}
                       </td>
                     ))}
                   </tr>
@@ -169,6 +155,17 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
               })}
             </tbody>
           </table>
+        )}
+      </div>
+
+      <div className="p-2.5 bg-amber-50/40 border-t border-amber-200/50 flex justify-between items-center text-xs">
+        <span className="text-stone-500">
+          Showing <strong>{columns.length}</strong> columns of forensic metadata
+        </span>
+        {reportSuccess && (
+          <span className="text-emerald-700 font-semibold text-[11px] animate-fade">
+            ✓ {reportSuccess} appended to AES-256 diagnostics buffer
+          </span>
         )}
       </div>
     </div>

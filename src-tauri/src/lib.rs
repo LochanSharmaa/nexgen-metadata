@@ -33,14 +33,72 @@ use std::net::SocketAddr;
 use std::path::PathBuf;
 use tracing::info;
 
+#[derive(rust_embed::RustEmbed)]
+#[folder = "../dist"]
+struct DistAssets;
+
+async fn static_handler(uri: axum::http::Uri) -> axum::response::Response {
+    let path = uri.path().trim_start_matches('/');
+    let target = if path.is_empty() { "index.html" } else { path };
+
+    if let Some(file) = DistAssets::get(target) {
+        let mime = get_mime_type(target);
+        return axum::response::Response::builder()
+            .status(StatusCode::OK)
+            .header(header::CONTENT_TYPE, mime)
+            .header(header::CACHE_CONTROL, "no-cache, no-store, must-revalidate")
+            .header(header::PRAGMA, "no-cache")
+            .header(header::EXPIRES, "0")
+            .body(axum::body::Body::from(file.data))
+            .unwrap();
+    }
+
+    // SPA fallback: return index.html for all non-matching routes
+    if let Some(index) = DistAssets::get("index.html") {
+        return axum::response::Response::builder()
+            .status(StatusCode::OK)
+            .header(header::CONTENT_TYPE, "text/html; charset=utf-8")
+            .header(header::CACHE_CONTROL, "no-cache, no-store, must-revalidate")
+            .header(header::PRAGMA, "no-cache")
+            .header(header::EXPIRES, "0")
+            .body(axum::body::Body::from(index.data))
+            .unwrap();
+    }
+
+    axum::response::Response::builder()
+        .status(StatusCode::NOT_FOUND)
+        .body(axum::body::Body::from("404 Not Found"))
+        .unwrap()
+}
+
+fn get_mime_type(path: &str) -> &'static str {
+    if path.ends_with(".html") {
+        "text/html; charset=utf-8"
+    } else if path.ends_with(".js") {
+        "application/javascript; charset=utf-8"
+    } else if path.ends_with(".css") {
+        "text/css; charset=utf-8"
+    } else if path.ends_with(".svg") {
+        "image/svg+xml"
+    } else if path.ends_with(".png") {
+        "image/png"
+    } else if path.ends_with(".jpg") || path.ends_with(".jpeg") {
+        "image/jpeg"
+    } else if path.ends_with(".ico") {
+        "image/x-icon"
+    } else if path.ends_with(".json") {
+        "application/json"
+    } else if path.ends_with(".woff2") {
+        "font/woff2"
+    } else {
+        "application/octet-stream"
+    }
+}
+
 /// Build and return the fully configured Axum router bound to the shared AppState.
 /// Used by both the standalone server and the Tauri desktop wrapper.
 pub fn build_router(app_state: AppState) -> Router {
-    let cors = axum::http::header::HeaderName::from_static("access-control-allow-origin");
-    let _ = cors; // suppress unused warning
-
     use tower_http::cors::{Any, CorsLayer};
-    use tower_http::services::ServeDir;
 
     let cors_layer = CorsLayer::new()
         .allow_origin(Any)
@@ -57,26 +115,10 @@ pub fn build_router(app_state: AppState) -> Router {
     let protected_routes = create_api_router()
         .layer(middleware::from_fn(auth_middleware));
 
-    // Resolve the `dist/` folder — look next to the running binary first
-    // (production), then fall back to CWD (development).
-    let exe_dir = std::env::current_exe()
-        .ok()
-        .and_then(|p| p.parent().map(|d| d.to_path_buf()))
-        .unwrap_or_else(|| PathBuf::from("."));
-
-    let dist_dir = if exe_dir.join("dist").exists() {
-        exe_dir.join("dist")
-    } else {
-        PathBuf::from("./dist")
-    };
-
-    let static_service = ServeDir::new(&dist_dir)
-        .fallback(tower_http::services::ServeFile::new(dist_dir.join("index.html")));
-
     Router::new()
         .merge(public_routes)
         .merge(protected_routes)
-        .fallback_service(static_service)
+        .fallback(static_handler)
         .layer(cors_layer)
         .with_state(app_state)
 }

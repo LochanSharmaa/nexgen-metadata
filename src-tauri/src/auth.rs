@@ -189,3 +189,17 @@ pub async fn auth_middleware(req: Request<Body>, next: Next) -> Response {
             .into_response(),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_valid_license() {
+        let key = "NEXGEN-eyJjdXN0b21lcl9pZCI6Ik5leEdlbi1Gb3VuZGVyIiwiaXNzdWVkX2F0IjoxNzkzMzM0OTg5LCJleHBpcmVzX2F0IjoxODI0ODcwOTg5LCJwbGFuIjoiRW50ZXJwcmlzZS1VbmxpbWl0ZWQifQ.1w_Q2HVJ16KZrt1tAncjbzRvvyaGPCLIBZMDLjgnowGaB_XUVRoJyhpo029Z322m4kCeRUa_YHDcr9Sw2u0nDA";
+        let res = verify_license_key(key);
+        assert!(res.is_ok(), "License verification failed: {:?}", res.err());
+        let payload = res.unwrap();
+        assert_eq!(payload.customer_id, "NexGen-Founder");
+    }
+}

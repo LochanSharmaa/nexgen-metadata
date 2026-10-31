@@ -13,7 +13,7 @@
     "withGlobalTauri": false,
     "windows": [
       {
-        "title": "NexGen Metadata — Forensic Deep Inspection Suite",
+        "title": "NexGen Metadata",
         "width": 1400,
         "height": 860,
         "minWidth": 1100,

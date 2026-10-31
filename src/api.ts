@@ -64,6 +64,11 @@ export const getRecordsApi = async (scanId: string, page = 0, pageSize = 100) =>
   return res.data;
 };
 
+export const selectFolderApi = async (): Promise<{ path: string; files: number; size: string }> => {
+  const res = await api.post("/api/dialog/folder");
+  return res.data;
+};
+
 export const triggerExportDownload = (scanId: string, format = "csv") => {
   const token = localStorage.getItem("nexgen_jwt") || "";
   // Direct file download URL via GET /api/scan/export/:scan_id?format=...

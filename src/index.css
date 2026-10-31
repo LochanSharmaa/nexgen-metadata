@@ -6,6 +6,96 @@
   html, body {
     margin: 0;
     padding: 0;
-    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  body {
+    overscroll-behavior: none;
+    background-color: #FFFDF5;
   }
 }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(217, 119, 6, 0.22); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(217, 119, 6, 0.45); }
+
+.apple-glass {
+  background: rgba(255, 253, 245, 0.82);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid rgba(254, 243, 199, 0.85);
+}
+
+.apple-glass-card {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(254, 243, 199, 0.8);
+}
+
+.apple-glass-subtle {
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(254, 243, 199, 0.7);
+}
+
+.macos-mesh-bg {
+  background: radial-gradient(circle at 15% 15%, rgba(254, 243, 199, 0.55), transparent 45%),
+              radial-gradient(circle at 85% 20%, rgba(253, 230, 138, 0.35), transparent 50%),
+              radial-gradient(circle at 50% 85%, rgba(255, 251, 235, 0.75), transparent 50%),
+              #FFFDF5;
+}
+
+.apple-press:active { transform: scale(0.98); }
+
+.field-checked {
+  border-color: rgba(245, 158, 11, 0.45) !important;
+  background: rgba(254, 240, 138, 0.28) !important;
+}
+
+.field-checked .cb-box {
+  background: #fef08a !important; /* pastel yellow (bg-yellow-200) */
+  border-color: #facc15 !important;
+}
+
+.field-checked .cb-box .cb-check {
+  display: block !important;
+  color: #0f172a !important; /* dark checkmark */
+}
+
+.field-checked .field-name {
+  font-weight: 600 !important;
+  color: #0f172a !important;
+}
+
+.cat-nav-active {
+  background: #fef08a !important; /* pastel yellow (bg-yellow-200) */
+  color: #0f172a !important; /* dark text */
+  border-color: #fde047 !important;
+}
+
+.cat-nav-active .cat-count-badge {
+  background: #fef9c3 !important; /* pastel yellow-100 */
+  color: #451a03 !important; /* dark amber text */
+  border: 1px solid rgba(217, 119, 6, 0.3) !important;
+}
+
+.cat-nav-active .cat-icon {
+  color: #92400e !important; /* warm gold / amber */
+}
+
+.drag-over { border-top: 2px solid #f59e0b !important; }
+.drag-ghost { opacity: 0.5; }
+
+.shimmer-glow {
+  background-size: 200% 100%;
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.category-fields-hidden { display: none !important; }
+.search-hidden { display: none !important; }

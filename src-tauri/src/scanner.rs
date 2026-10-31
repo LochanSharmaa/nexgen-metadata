@@ -371,9 +371,10 @@ fn process_single_file(
     // 4. ExifTool Daemon Pool Query for Media Formats with Tiered Self-Healing Mapping
     let ext = meta.file_extension.as_deref().unwrap_or("");
     let media_extensions = [
-        "jpg", "jpeg", "png", "tiff", "cr2", "cr3", "nef", "arw", "dng",
-        "mp4", "mkv", "mov", "avi", "mp3", "wav", "flac", "m4a",
-        "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx",
+        "jpg", "jpeg", "png", "tiff", "tif", "cr2", "cr3", "nef", "arw", "dng", "heic", "webp", "gif", "bmp", "ico",
+        "mp4", "mkv", "mov", "avi", "wmv", "flv", "m4v", "webm",
+        "mp3", "wav", "flac", "m4a", "aac", "ogg", "wma", "aiff",
+        "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "odt", "ods", "odp", "rtf", "msg", "eml",
     ];
     if media_extensions.contains(&ext) {
         if let Ok(json_data) = exiftool_pool.query_blocking(path) {
