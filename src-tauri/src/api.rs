@@ -84,6 +84,7 @@ pub fn create_api_router() -> Router<AppState> {
         .route("/api/scan/start", post(handle_start_scan))
         .route("/api/scan/cancel", post(handle_cancel_scan))
         .route("/api/scan/status/{scan_id}", get(handle_scan_status_sse))
+        .route("/api/scan/progress/{scan_id}", get(handle_get_progress))
         .route("/api/scan/export/{scan_id}", get(handle_export_download))
         .route("/api/scan/records/{scan_id}", get(handle_get_records))
         .route("/api/report-issue", post(handle_report_issue))
@@ -126,12 +127,22 @@ pub async fn handle_start_scan(
     })?;
 
     let raw_cache = Arc::new(Mutex::new(VecDeque::with_capacity(100)));
+    let latest_progress = Arc::new(std::sync::Mutex::new(Some(ScanProgress {
+        scanned_files: 0,
+        total_files: 0,
+        current_file: "Initializing forensic scanner...".to_string(),
+        percentage: 0.0,
+        status: "Scanning".to_string(),
+        errors: 0,
+        elapsed_ms: 0,
+    })));
 
     let scan_handle = ScanHandle {
         scan_id: scan_id.clone(),
         target_folder: target_folder.clone(),
         cancel_token: cancel_token.clone(),
         progress_tx: progress_tx.clone(),
+        latest_progress: Arc::clone(&latest_progress),
         results: Arc::clone(&results_store),
         raw_cache: Arc::clone(&raw_cache),
     };
@@ -149,6 +160,7 @@ pub async fn handle_start_scan(
     let selected_fields = payload.fields.unwrap_or_default();
     let folder_str = payload.folder_path.clone();
     let scan_id_worker = scan_id.clone();
+    let progress_worker = Arc::clone(&latest_progress);
 
     // Spawn async worker pipeline
     tokio::spawn(async move {
@@ -160,6 +172,7 @@ pub async fn handle_start_scan(
             selected_fields,
             cancel_token,
             progress_tx,
+            progress_worker,
             exiftool_pool,
             db_writer,
             results_store,
@@ -196,6 +209,20 @@ pub async fn handle_cancel_scan(
     }
 }
 
+/// GET /api/scan/progress/:scan_id — Immediate JSON snapshot of current scan progress
+pub async fn handle_get_progress(
+    State(state): State<AppState>,
+    AxumPath(scan_id): AxumPath<String>,
+) -> Result<Json<ScanProgress>, StatusCode> {
+    let active = state.active_scans.lock().await;
+    let handle = active.get(&scan_id).ok_or(StatusCode::NOT_FOUND)?;
+    let prog = handle.latest_progress.lock().ok().and_then(|l| l.clone());
+    match prog {
+        Some(p) => Ok(Json(p)),
+        None => Err(StatusCode::NOT_FOUND),
+    }
+}
+
 /// GET /api/scan/status/:scan_id — SSE Stream yielding progress every 100ms
 pub async fn handle_scan_status_sse(
     State(state): State<AppState>,
@@ -204,8 +231,19 @@ pub async fn handle_scan_status_sse(
     let active = state.active_scans.lock().await;
     let handle = active.get(&scan_id).ok_or(StatusCode::NOT_FOUND)?;
     let mut rx = handle.progress_tx.subscribe();
+    let initial_progress = handle.latest_progress.lock().ok().and_then(|l| l.clone());
 
     let stream = async_stream::stream! {
+        if let Some(initial) = initial_progress {
+            let is_terminal = initial.status == "Completed" || initial.status == "Cancelled";
+            if let Ok(json_str) = serde_json::to_string(&initial) {
+                yield Ok(Event::default().data(json_str));
+            }
+            if is_terminal {
+                return;
+            }
+        }
+
         while let Ok(progress) = rx.recv().await {
             let is_terminal = progress.status == "Completed" || progress.status == "Cancelled";
             if let Ok(json_str) = serde_json::to_string(&progress) {

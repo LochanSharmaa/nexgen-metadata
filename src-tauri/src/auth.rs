@@ -153,19 +153,41 @@ pub fn validate_jwt(token: &str) -> Result<Claims, String> {
 pub async fn auth_middleware(req: Request<Body>, next: Next) -> Response {
     let path = req.uri().path().to_string();
 
-    // Whitelisted routes: activation, token verification, and health check
-    if path == "/api/activate" || path == "/api/health" || path.starts_with("/dist") || !path.starts_with("/api") {
+    // Whitelisted routes: activation, token verification, health check, and SSE status/progress streams
+    if path == "/api/activate"
+        || path == "/api/health"
+        || path.starts_with("/api/scan/status/")
+        || path.starts_with("/api/scan/progress/")
+        || path.starts_with("/dist")
+        || !path.starts_with("/api")
+    {
         return next.run(req).await;
     }
 
-    // Extract Authorization header
+    // Extract Authorization header or ?token= query parameter (for browser EventSource)
     let auth_header = req
         .headers()
         .get(AUTHORIZATION)
         .and_then(|h| h.to_str().ok());
 
+    let token_from_query = req.uri().query().and_then(|q| {
+        q.split('&').find_map(|pair| {
+            let mut parts = pair.split('=');
+            if parts.next() == Some("token") {
+                parts.next()
+            } else {
+                None
+            }
+        })
+    });
+
     let token = match auth_header {
-        Some(header) if header.starts_with("Bearer ") => &header[7..],
+        Some(header) if header.starts_with("Bearer ") => Some(&header[7..]),
+        _ => token_from_query,
+    };
+
+    let token = match token {
+        Some(t) if !t.is_empty() => t,
         _ => {
             return (
                 StatusCode::UNAUTHORIZED,

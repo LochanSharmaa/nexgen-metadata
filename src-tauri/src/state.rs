@@ -17,6 +17,7 @@ pub struct ScanHandle {
     pub target_folder: PathBuf,
     pub cancel_token: CancellationToken,
     pub progress_tx: broadcast::Sender<ScanProgress>,
+    pub latest_progress: Arc<std::sync::Mutex<Option<ScanProgress>>>,
     pub results: Arc<Mutex<Vec<FileMetadata>>>,
     pub raw_cache: Arc<Mutex<VecDeque<RawCache>>>,
 }

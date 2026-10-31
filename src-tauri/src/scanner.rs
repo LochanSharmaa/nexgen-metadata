@@ -50,6 +50,7 @@ pub fn start_scan_sync(
     _selected_fields: Vec<String>,
     cancel_token: CancellationToken,
     progress_tx: broadcast::Sender<ScanProgress>,
+    latest_progress: Arc<std::sync::Mutex<Option<ScanProgress>>>,
     exiftool_pool: Arc<ExiftoolPool>,
     db_writer: DatabaseWriter,
     results_store: Arc<Mutex<Vec<FileMetadata>>>,
@@ -58,6 +59,13 @@ pub fn start_scan_sync(
     let root_path = PathBuf::from(&folder_path);
     info!("Starting synchronous scan {} on target directory: {:?}", scan_id, root_path);
     let start_time = Instant::now();
+
+    let send_progress = |prog: ScanProgress| {
+        if let Ok(mut lock) = latest_progress.lock() {
+            *lock = Some(prog.clone());
+        }
+        let _ = progress_tx.send(prog);
+    };
 
     let field_mapper = Arc::new(FieldMapper::new(GoldenMatrix::load_embedded()));
 
@@ -71,7 +79,7 @@ pub fn start_scan_sync(
     for entry in walker {
         if cancel_token.is_cancelled() {
             info!("Scan cancelled during directory discovery");
-            let _ = progress_tx.send(ScanProgress {
+            send_progress(ScanProgress {
                 scanned_files: 0,
                 total_files: 0,
                 current_file: "Discovery Cancelled".to_string(),
@@ -99,7 +107,7 @@ pub fn start_scan_sync(
     info!("Discovered {} files. Beginning parallel analysis...", total_files);
 
     if total_files == 0 {
-        let _ = progress_tx.send(ScanProgress {
+        send_progress(ScanProgress {
             scanned_files: 0,
             total_files: 0,
             current_file: "No files found".to_string(),
@@ -126,7 +134,7 @@ pub fn start_scan_sync(
     for chunk in chunks {
         if cancel_token.is_cancelled() {
             info!("Cancellation signal detected. Halting scan immediately.");
-            let _ = progress_tx.send(ScanProgress {
+            send_progress(ScanProgress {
                 scanned_files: scanned_counter.load(Ordering::Relaxed),
                 total_files,
                 current_file: "Scan Cancelled by User".to_string(),
@@ -208,7 +216,7 @@ pub fn start_scan_sync(
         };
 
         // Broadcast progress update to SSE subscribers
-        let _ = progress_tx.send(ScanProgress {
+        send_progress(ScanProgress {
             scanned_files: current_count,
             total_files,
             current_file: last_file_name,
@@ -223,7 +231,7 @@ pub fn start_scan_sync(
     let _ = db_writer.shutdown_sync();
 
     let final_scanned = scanned_counter.load(Ordering::Relaxed);
-    let _ = progress_tx.send(ScanProgress {
+    send_progress(ScanProgress {
         scanned_files: final_scanned,
         total_files,
         current_file: "Completed".to_string(),
@@ -245,6 +253,7 @@ pub async fn start_scan(
     selected_fields: Vec<String>,
     cancel_token: CancellationToken,
     progress_tx: broadcast::Sender<ScanProgress>,
+    latest_progress: Arc<std::sync::Mutex<Option<ScanProgress>>>,
     exiftool_pool: Arc<ExiftoolPool>,
     db_writer: DatabaseWriter,
     results_store: Arc<Mutex<Vec<FileMetadata>>>,
@@ -259,6 +268,7 @@ pub async fn start_scan(
             selected_fields,
             cancel_token,
             progress_tx,
+            latest_progress,
             exiftool_pool,
             db_writer,
             results_store,

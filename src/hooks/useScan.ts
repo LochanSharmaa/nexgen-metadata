@@ -58,7 +58,8 @@ export function useScan(scanIdProp?: string | null) {
         eventSourceRef.current.close();
       }
 
-      const sseUrl = `${API_BASE_URL}/api/scan/status/${id}`;
+      const token = localStorage.getItem("nexgen_jwt");
+      const sseUrl = `${API_BASE_URL}/api/scan/status/${id}${token ? `?token=${encodeURIComponent(token)}` : ""}`;
       const sse = new EventSource(sseUrl);
       eventSourceRef.current = sse;
 
@@ -108,10 +109,26 @@ export function useScan(scanIdProp?: string | null) {
         // Connect SSE stream to /api/scan/status/:scan_id
         connectSse(newScanId);
 
-        // Periodically refresh preview table during active scan
-        pollIntervalRef.current = window.setInterval(() => {
+        // Poll progress and records every 400ms to guarantee zero UI deadlocks
+        pollIntervalRef.current = window.setInterval(async () => {
+          try {
+            const progRes = await api.get(`/api/scan/progress/${newScanId}`);
+            if (progRes.data) {
+              setProgress(progRes.data);
+              if (progRes.data.status === "Completed" || progRes.data.status === "Cancelled") {
+                setIsScanning(false);
+                if (eventSourceRef.current) {
+                  eventSourceRef.current.close();
+                }
+                if (pollIntervalRef.current) {
+                  clearInterval(pollIntervalRef.current);
+                }
+                fetchRecords(newScanId);
+              }
+            }
+          } catch {}
           fetchRecords(newScanId);
-        }, 800);
+        }, 400);
 
         return newScanId;
       } catch (err: any) {
