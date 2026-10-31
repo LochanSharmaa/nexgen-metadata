@@ -1,14 +1,10 @@
-//! database.rs — SQLite Write-Ahead Logging (WAL) Buffered Persistence Layer
-//!
-//! Handles buffering records in memory and flushing them to SQLite in bulk
-//! transactions of 5,000 items to avoid disk saturation and maintain sub-100MB footprint.
+//! database.rs — SQLite WAL Buffered Persistence Layer using standard std::thread & crossbeam-channel
 
 use crate::errors::NexGenError;
 use crate::models::FileMetadata;
-use rusqlite::{params, Connection};
+use crossbeam::channel::{unbounded, Receiver, Sender};
+use rusqlite::Connection;
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
-use tokio::sync::mpsc;
 use tracing::{error, info};
 
 pub enum DatabaseMessage {
@@ -17,41 +13,47 @@ pub enum DatabaseMessage {
     Shutdown,
 }
 
+#[derive(Clone)]
 pub struct DatabaseWriter {
-    sender: mpsc::Sender<DatabaseMessage>,
-    join_handle: Option<tokio::task::JoinHandle<()>>,
+    sender: Sender<DatabaseMessage>,
 }
 
 impl DatabaseWriter {
-    pub async fn send(&self, record: FileMetadata) -> Result<(), NexGenError> {
+    pub fn send_sync(&self, record: FileMetadata) -> Result<(), NexGenError> {
         self.sender
             .send(DatabaseMessage::Record(Box::new(record)))
-            .await
             .map_err(|e| NexGenError::Database(format!("Channel send error: {}", e)))
     }
 
-    pub async fn flush(&self) -> Result<(), NexGenError> {
+    pub async fn send(&self, record: FileMetadata) -> Result<(), NexGenError> {
+        self.send_sync(record)
+    }
+
+    pub fn flush_sync(&self) -> Result<(), NexGenError> {
         self.sender
             .send(DatabaseMessage::Flush)
-            .await
             .map_err(|e| NexGenError::Database(format!("Flush signal error: {}", e)))
     }
 
-    pub async fn shutdown(mut self) -> Result<(), NexGenError> {
-        let _ = self.sender.send(DatabaseMessage::Shutdown).await;
-        if let Some(handle) = self.join_handle.take() {
-            let _ = handle.await;
-        }
+    pub async fn flush(&self) -> Result<(), NexGenError> {
+        self.flush_sync()
+    }
+
+    pub fn shutdown_sync(&self) -> Result<(), NexGenError> {
+        let _ = self.sender.send(DatabaseMessage::Shutdown);
         Ok(())
+    }
+
+    pub async fn shutdown(self) -> Result<(), NexGenError> {
+        self.shutdown_sync()
     }
 }
 
-pub async fn create_database(db_path: &Path) -> Result<DatabaseWriter, NexGenError> {
+pub fn create_database_sync(db_path: &Path) -> Result<DatabaseWriter, NexGenError> {
     let path_buf = db_path.to_path_buf();
     let conn = Connection::open(&path_buf)
         .map_err(|e| NexGenError::Database(format!("Failed to open DB: {}", e)))?;
 
-    // Execute performance PRAGMAs for extreme write throughput
     conn.execute_batch(
         "PRAGMA journal_mode=WAL;
          PRAGMA synchronous=OFF;
@@ -89,65 +91,53 @@ pub async fn create_database(db_path: &Path) -> Result<DatabaseWriter, NexGenErr
     )
     .map_err(|e| NexGenError::Database(format!("Schema initialization failed: {}", e)))?;
 
-    let (tx, rx) = mpsc::channel::<DatabaseMessage>(5000);
+    let (tx, rx) = unbounded::<DatabaseMessage>();
 
-    let join_handle = tokio::task::spawn_blocking(move || {
-        writer_loop(rx, conn, path_buf);
-    });
+    std::thread::Builder::new()
+        .name("sqlite-wal-writer".to_string())
+        .spawn(move || {
+            writer_loop(rx, conn);
+        })
+        .map_err(|e| NexGenError::Database(format!("Failed to spawn SQLite writer thread: {}", e)))?;
 
-    Ok(DatabaseWriter {
-        sender: tx,
-        join_handle: Some(join_handle),
-    })
+    Ok(DatabaseWriter { sender: tx })
 }
 
-fn writer_loop(
-    mut rx: mpsc::Receiver<DatabaseMessage>,
-    mut conn: Connection,
-    db_path: PathBuf,
-) {
+pub async fn create_database(db_path: &Path) -> Result<DatabaseWriter, NexGenError> {
+    create_database_sync(db_path)
+}
+
+fn writer_loop(rx: Receiver<DatabaseMessage>, mut conn: Connection) {
     let mut buffer: Vec<FileMetadata> = Vec::with_capacity(5000);
 
-    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        while let Some(msg) = rx.blocking_recv() {
-            match msg {
-                DatabaseMessage::Record(rec) => {
-                    buffer.push(*rec);
-                    if buffer.len() >= 5000 {
-                        if let Err(e) = flush_to_db(&mut conn, &mut buffer) {
-                            error!("Database batch flush error: {:?}", e);
-                            emergency_dump(&buffer);
-                        }
+    while let Ok(msg) = rx.recv() {
+        match msg {
+            DatabaseMessage::Record(rec) => {
+                buffer.push(*rec);
+                if buffer.len() >= 5000 {
+                    if let Err(e) = flush_to_db(&mut conn, &mut buffer) {
+                        error!("Database batch flush error: {:?}", e);
                     }
-                }
-                DatabaseMessage::Flush => {
-                    if !buffer.is_empty() {
-                        if let Err(e) = flush_to_db(&mut conn, &mut buffer) {
-                            error!("Database flush error: {:?}", e);
-                            emergency_dump(&buffer);
-                        }
-                    }
-                }
-                DatabaseMessage::Shutdown => {
-                    if !buffer.is_empty() {
-                        let _ = flush_to_db(&mut conn, &mut buffer);
-                    }
-                    break;
                 }
             }
+            DatabaseMessage::Flush => {
+                if !buffer.is_empty() {
+                    if let Err(e) = flush_to_db(&mut conn, &mut buffer) {
+                        error!("Database flush error: {:?}", e);
+                    }
+                }
+            }
+            DatabaseMessage::Shutdown => {
+                if !buffer.is_empty() {
+                    let _ = flush_to_db(&mut conn, &mut buffer);
+                }
+                break;
+            }
         }
-    }));
-
-    if result.is_err() {
-        error!("Database worker thread panicked! Emergency dumping active memory buffer...");
-        emergency_dump(&buffer);
     }
 }
 
-fn flush_to_db(
-    conn: &mut Connection,
-    buffer: &mut Vec<FileMetadata>,
-) -> Result<(), NexGenError> {
+fn flush_to_db(conn: &mut Connection, buffer: &mut Vec<FileMetadata>) -> Result<(), NexGenError> {
     if buffer.is_empty() {
         return Ok(());
     }
@@ -168,60 +158,41 @@ fn flush_to_db(
                     ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21
                 )",
             )
-            .map_err(|e| NexGenError::Database(format!("Prepare statement error: {}", e)))?;
+            .map_err(|e| NexGenError::Database(format!("Failed to prepare statement: {}", e)))?;
 
-        for item in buffer.iter() {
-            let timestomp_str = item.timestomp_suspect.as_ref().map(|t| format!("{:?}", t));
-            let raw_json = serde_json::to_string(item).unwrap_or_default();
+        for record in buffer.iter() {
+            let timestomp_str = record.timestomp_suspect.as_ref().map(|s| format!("{:?}", s));
+            let raw_json_str = serde_json::to_string(record).unwrap_or_default();
 
-            let macb = item.macb.as_ref();
-            let macb_created = macb.and_then(|m| m.created.as_deref());
-            let macb_accessed = macb.and_then(|m| m.accessed.as_deref());
-            let macb_modified = macb.and_then(|m| m.modified.as_deref());
-            let macb_changed = macb.and_then(|m| m.changed.as_deref());
-
-            stmt.execute(params![
-                item.id as i64,
-                item.file_name,
-                item.file_extension,
-                item.file_path,
-                item.parent_directory,
-                item.size_bytes.map(|s| s as i64),
-                item.size_human,
-                item.hash_blake3,
-                item.hash_sha256,
-                item.hash_md5,
-                item.shannon_entropy,
-                item.entropy_classification,
-                item.magic_bytes_hex,
+            let _ = stmt.execute(rusqlite::params![
+                record.id as i64,
+                record.file_name,
+                record.file_extension,
+                record.file_path,
+                record.parent_directory,
+                record.size_bytes.map(|s| s as i64),
+                record.size_human,
+                record.hash_blake3,
+                record.hash_sha256,
+                record.hash_md5,
+                record.shannon_entropy,
+                record.entropy_classification,
+                record.magic_bytes_hex,
                 timestomp_str,
-                macb_created,
-                macb_accessed,
-                macb_modified,
-                macb_changed,
-                item.ads_zone_id,
-                item.ads_host_url,
-                raw_json,
-            ])
-            .map_err(|e| NexGenError::Database(format!("Insert row failure: {}", e)))?;
+                record.macb.as_ref().and_then(|m| m.created.clone()),
+                record.macb.as_ref().and_then(|m| m.accessed.clone()),
+                record.macb.as_ref().and_then(|m| m.modified.clone()),
+                record.macb.as_ref().and_then(|m| m.changed.clone()),
+                record.ads_zone_id.map(|z| z as i64),
+                record.ads_host_url,
+                raw_json_str,
+            ]);
         }
     }
 
     tx.commit()
-        .map_err(|e| NexGenError::Database(format!("Commit failure: {}", e)))?;
+        .map_err(|e| NexGenError::Database(format!("Failed to commit batch: {}", e)))?;
 
-    info!("Flushed {} records to SQLite WAL store", buffer.len());
     buffer.clear();
     Ok(())
-}
-
-fn emergency_dump(buffer: &[FileMetadata]) {
-    if buffer.is_empty() {
-        return;
-    }
-    let dump_file = PathBuf::from("emergency_dump.json");
-    if let Ok(serialized) = serde_json::to_string_pretty(buffer) {
-        let _ = std::fs::write(&dump_file, serialized);
-        error!("Emergency dump successfully written to {:?}", dump_file);
-    }
 }

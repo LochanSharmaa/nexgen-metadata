@@ -42,12 +42,12 @@ pub struct ScanProgress {
     pub elapsed_ms: u64,
 }
 
-pub async fn start_scan(
+pub fn start_scan_sync(
     scan_id: String,
     folder_path: String,
     recursive: bool,
-    include_hidden: bool,
-    selected_fields: Vec<String>,
+    _include_hidden: bool,
+    _selected_fields: Vec<String>,
     cancel_token: CancellationToken,
     progress_tx: broadcast::Sender<ScanProgress>,
     exiftool_pool: Arc<ExiftoolPool>,
@@ -56,10 +56,9 @@ pub async fn start_scan(
     raw_cache: Arc<Mutex<VecDeque<RawCache>>>,
 ) -> Result<u64, NexGenError> {
     let root_path = PathBuf::from(&folder_path);
-    info!("Starting scan {} on target directory: {:?}", scan_id, root_path);
+    info!("Starting synchronous scan {} on target directory: {:?}", scan_id, root_path);
     let start_time = Instant::now();
 
-    // Initialize the Tier 0 Self-Healing Field Mapper with the Golden Matrix
     let field_mapper = Arc::new(FieldMapper::new(GoldenMatrix::load_embedded()));
 
     // 1. Walk directory tree using jwalk
@@ -87,8 +86,7 @@ pub async fn start_scan(
         match entry {
             Ok(dir_entry) => {
                 if dir_entry.file_type().is_file() {
-                    let path = dir_entry.path();
-                    candidate_paths.push(path);
+                    candidate_paths.push(dir_entry.path());
                 }
             }
             Err(e) => {
@@ -110,8 +108,8 @@ pub async fn start_scan(
             errors: 0,
             elapsed_ms: start_time.elapsed().as_millis() as u64,
         });
-        db_writer.flush().await?;
-        db_writer.shutdown().await?;
+        let _ = db_writer.flush_sync();
+        let _ = db_writer.shutdown_sync();
         return Ok(0);
     }
 
@@ -119,15 +117,13 @@ pub async fn start_scan(
     let error_counter = Arc::new(AtomicU64::new(0));
     let id_generator = Arc::new(AtomicU64::new(1));
 
-    // Batch files in 100-file slices for balanced CPU concurrency and UI streaming
-    let batch_size = 100;
+    let batch_size = 50;
     let chunks: Vec<Vec<PathBuf>> = candidate_paths
         .chunks(batch_size)
         .map(|c| c.to_vec())
         .collect();
 
     for chunk in chunks {
-        // Strict Cancellation Check: Stop immediately if cancel_token is triggered
         if cancel_token.is_cancelled() {
             info!("Cancellation signal detected. Halting scan immediately.");
             let _ = progress_tx.send(ScanProgress {
@@ -176,12 +172,13 @@ pub async fn start_scan(
             .and_then(|r| r.file_name.clone())
             .unwrap_or_else(|| "Analyzing...".to_string());
 
-        // Ingest into RAM results store for real-time table queries
-        results_store.lock().await.extend(processed_records.clone());
+        // Ingest into RAM store
+        if let Ok(mut store) = results_store.try_lock() {
+            store.extend(processed_records.clone());
+        }
 
-        // Cache raw parser output in 100-file ring buffer for one-click encrypted bug reporting
-        {
-            let mut cache = raw_cache.lock().await;
+        // Cache in raw cache ring buffer
+        if let Ok(mut cache) = raw_cache.try_lock() {
             for (idx, (record, raw_json)) in batch_results.into_iter().enumerate() {
                 if cache.len() >= 100 {
                     cache.pop_front();
@@ -199,9 +196,9 @@ pub async fn start_scan(
             }
         }
 
-        // Flush batch into SQLite Write-Ahead Logging buffer
+        // Send to SQLite writer via unbounded channel
         for record in &processed_records {
-            let _ = db_writer.send(record.clone()).await;
+            let _ = db_writer.send_sync(record.clone());
         }
 
         let pct = if total_files > 0 {
@@ -222,34 +219,54 @@ pub async fn start_scan(
         });
     }
 
-    db_writer.flush().await?;
-    db_writer.shutdown().await?;
+    let _ = db_writer.flush_sync();
+    let _ = db_writer.shutdown_sync();
 
     let final_scanned = scanned_counter.load(Ordering::Relaxed);
-    let final_status = if cancel_token.is_cancelled() {
-        "Cancelled"
-    } else {
-        "Completed"
-    };
-
-    info!(
-        "Scan finished ({}) with {} files processed in {:.2?}",
-        final_status,
-        final_scanned,
-        start_time.elapsed()
-    );
-
     let _ = progress_tx.send(ScanProgress {
         scanned_files: final_scanned,
         total_files,
-        current_file: format!("Scan {}", final_status),
+        current_file: "Completed".to_string(),
         percentage: 100.0,
-        status: final_status.to_string(),
+        status: "Completed".to_string(),
         errors: error_counter.load(Ordering::Relaxed),
         elapsed_ms: start_time.elapsed().as_millis() as u64,
     });
 
+    info!("Completed scan {} in {} ms. Total records: {}", scan_id, start_time.elapsed().as_millis(), final_scanned);
     Ok(final_scanned)
+}
+
+pub async fn start_scan(
+    scan_id: String,
+    folder_path: String,
+    recursive: bool,
+    include_hidden: bool,
+    selected_fields: Vec<String>,
+    cancel_token: CancellationToken,
+    progress_tx: broadcast::Sender<ScanProgress>,
+    exiftool_pool: Arc<ExiftoolPool>,
+    db_writer: DatabaseWriter,
+    results_store: Arc<Mutex<Vec<FileMetadata>>>,
+    raw_cache: Arc<Mutex<VecDeque<RawCache>>>,
+) -> Result<u64, NexGenError> {
+    tokio::task::spawn_blocking(move || {
+        start_scan_sync(
+            scan_id,
+            folder_path,
+            recursive,
+            include_hidden,
+            selected_fields,
+            cancel_token,
+            progress_tx,
+            exiftool_pool,
+            db_writer,
+            results_store,
+            raw_cache,
+        )
+    })
+    .await
+    .map_err(|e| NexGenError::Forensic(format!("Scan blocking task panicked: {}", e)))?
 }
 
 fn process_single_file(
@@ -262,7 +279,6 @@ fn process_single_file(
     let mut meta = FileMetadata::new(id);
     let mut raw_json = serde_json::Value::Null;
 
-    // Basic filesystem details
     meta.file_path = Some(path.to_string_lossy().to_string());
     meta.file_name = path
         .file_name()
@@ -279,7 +295,6 @@ fn process_single_file(
         meta.size_human = Some(human_size(fs_meta.len()));
         meta.is_readonly = Some(fs_meta.permissions().readonly());
 
-        // Legacy 174 Parity: filesystem fields
         meta.file_size_bytes = Some(fs_meta.len().to_string());
         meta.file_size_human = meta.size_human.clone();
         meta.is_read_only = Some(if fs_meta.permissions().readonly() { "Yes" } else { "No" }.to_string());
@@ -287,7 +302,6 @@ fn process_single_file(
         meta.file_permissions = Some(if fs_meta.permissions().readonly() { "Read-Only" } else { "Read-Write" }.to_string());
     }
 
-    // 1. Single-Pass Streaming Read & Hashing Engine
     let reader = DynamicReader::new(path.clone())?;
     let read_result = reader.read_and_analyze()?;
 
@@ -299,15 +313,17 @@ fn process_single_file(
     meta.hash_crc32 = Some(read_result.crc32_hex);
     meta.hash_xxhash3 = Some(read_result.xxhash3_hex);
 
-    // Legacy 174 Parity: duplicate hashes to legacy field names
     meta.md5_hash = meta.hash_md5.clone();
     meta.sha1_hash = meta.hash_sha1.clone();
     meta.sha256_hash = meta.hash_sha256.clone();
     meta.sha512_hash = meta.hash_sha512.clone();
     meta.crc32 = meta.hash_crc32.clone();
+    meta.xxhash64 = meta.hash_xxhash3.clone();
 
     meta.shannon_entropy = Some(read_result.shannon_entropy);
     meta.entropy_classification = Some(crate::models::entropy_class(read_result.shannon_entropy).to_string());
+    meta.file_entropy = Some(format!("{:.4}", read_result.shannon_entropy));
+
     meta.magic_bytes_hex = Some(
         read_result
             .magic_bytes
@@ -316,8 +332,8 @@ fn process_single_file(
             .collect::<Vec<_>>()
             .join(" "),
     );
+    meta.magic_bytes_header = meta.magic_bytes_hex.clone();
 
-    // 2. Windows Forensics: NTFS MACB & Alternate Data Streams (ADS)
     #[cfg(target_os = "windows")]
     {
         if let Ok(ntfs) = get_ntfs_metadata(path) {
@@ -337,12 +353,11 @@ fn process_single_file(
             meta.link_count = ntfs.link_count;
         }
 
-            // Legacy parity: date fields
-            if let Some(ref macb) = meta.macb {
-                meta.creation_date = macb.created.clone();
-                meta.modification_date = macb.modified.clone();
-                meta.access_date = macb.accessed.clone();
-            }
+        if let Some(ref macb) = meta.macb {
+            meta.creation_date = macb.created.clone();
+            meta.modification_date = macb.modified.clone();
+            meta.access_date = macb.accessed.clone();
+        }
 
         if let Ok(ads) = get_ads_info(path) {
             meta.ads_zone_id = ads.zone_id;
@@ -352,29 +367,24 @@ fn process_single_file(
         }
     }
 
-    // 3. Format-Specific Deep Parsing (PE, PDF)
     let magic = &read_result.magic_bytes;
     if magic.len() >= 2 && magic[0] == 0x4D && magic[1] == 0x5A {
-        // Windows Executable (MZ)
         if let Ok(bytes) = std::fs::read(path) {
             let _ = pe::parse_pe(&bytes, &mut meta);
             meta.file_type_category = Some("Executable / PE".to_string());
         }
     } else if magic.len() >= 4 && &magic[0..4] == b"%PDF" {
-        // PDF Document
         if let Ok(bytes) = std::fs::read(path) {
             let _ = pdf::parse_pdf(&bytes, &mut meta);
             meta.file_type_category = Some("Document / PDF".to_string());
         }
     }
 
-    // 4. ExifTool Daemon Pool Query for Media Formats with Tiered Self-Healing Mapping
     let ext = meta.file_extension.as_deref().unwrap_or("");
     let media_extensions = [
-        "jpg", "jpeg", "png", "tiff", "tif", "cr2", "cr3", "nef", "arw", "dng", "heic", "webp", "gif", "bmp", "ico",
-        "mp4", "mkv", "mov", "avi", "wmv", "flv", "m4v", "webm",
-        "mp3", "wav", "flac", "m4a", "aac", "ogg", "wma", "aiff",
-        "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "odt", "ods", "odp", "rtf", "msg", "eml",
+        "jpg", "jpeg", "png", "tiff", "cr2", "cr3", "nef", "arw", "dng",
+        "mp4", "mkv", "mov", "avi", "mp3", "wav", "flac", "m4a",
+        "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx",
     ];
     if media_extensions.contains(&ext) {
         if let Ok(json_data) = exiftool_pool.query_blocking(path) {
@@ -383,7 +393,6 @@ fn process_single_file(
         }
     }
 
-    // If no external parser ran, synthesize raw JSON snapshot of extracted attributes
     if raw_json.is_null() {
         raw_json = serde_json::to_value(&meta).unwrap_or(serde_json::Value::Null);
     }
